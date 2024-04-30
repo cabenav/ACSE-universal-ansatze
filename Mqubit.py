@@ -19,7 +19,7 @@ import pickle
  
 #FUNCTIONS
 
-
+ff
 #Unitary transformation of 1 qubit
 def Unitary(x,y,z):
    return np.matrix([[np.cos(x/2), np.exp(z*1j)*np.sin(x/2)], [-np.exp((y-z)*1j)*np.sin(x/2), np.exp(y*1j)*np.cos(x/2)]])
