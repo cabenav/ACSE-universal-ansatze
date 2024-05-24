@@ -12,20 +12,18 @@ def kronecker_product(a, b):
 
 # Create the array of all possible Kronecker products of Pauli matrices
 all_pauli = np.zeros((4, 4, 4), dtype=np.complex128)
+
 for i in range(4):
     for j in range(4):
         for k in range(4):
-            all_pauli[i, j, k] = kronecker_product(kronecker_product(sigma_x, sigma_x), sigma_x) if i == 0 \
+          all_pauli[i, j, k] = kronecker_product(kronecker_product(sigma_x, sigma_x), sigma_x) if i == 0 \
                 else kronecker_product(kronecker_product(sigma_x, sigma_x), sigma_y) if i == 1 \
                 else kronecker_product(kronecker_product(sigma_x, sigma_x), sigma_z) if i == 2 \
                 else kronecker_product(kronecker_product(sigma_x, sigma_x), identity)
             
-            all_pauli[i, j, k] *= kronecker_product(sigma_y, sigma_y) if j == 0 \
+          all_pauli[i, j, k] *= kronecker_product(sigma_y, sigma_y) if j == 0 \
                 else kronecker_product(sigma_y, sigma_z) if j == 1 \
                 else kronecker_product(sigma_y, identity)
-            
-            all_pauli[i, j, k] *= sigma_z if k == 0 \
-                else identity
 
 # Generate a random real tensor RR in the range [-10, 10]
 RR = np.random.uniform(-10, 10, (4, 4, 4))
@@ -45,3 +43,4 @@ Ham = np.real(Ham)
 
 print(Ham)
 print(np.linalg.eigvals(Ham))
+
