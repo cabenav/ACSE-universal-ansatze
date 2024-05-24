@@ -49,8 +49,7 @@ def expectation_value(ve1, AA):
 def Be(a, b, c, d, e, f):
     return a * A[0] + b * A[1] + c * A[2] + d * A[3] + e * A[4] + f * A[5]
 
-# Initialize vv and w
-vv = np.zeros((4, 4), dtype=complex)
+# Initialize w
 w = np.array([0.4, 0.3, 0.2, 0.1])
 
 # Generate AllPauli array
