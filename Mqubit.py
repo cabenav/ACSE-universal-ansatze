@@ -21,7 +21,7 @@ Ladder = [
 # Initialize A array
 A = np.zeros((6, 4, 4), dtype=complex)
 
-# Populate A array
+# Populate A array aka the basis of the Lie algebra
 A[0] = kron(1j * PauliMatrix[2], Ladder[0])
 A[1] = kron(1j * PauliMatrix[2], Ladder[1])
 A[2] = kron(Ladder[0], 1j * PauliMatrix[2])
