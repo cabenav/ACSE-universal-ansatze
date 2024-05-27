@@ -16,10 +16,11 @@ folder='data'
 #_=filename.split('/')[-1]
 #filename_checkpoint=f'result/{_}.32'
 #filename_loss=f'result/{_}.loss.32'
-filename_checkpoint=f'check.pu'
+filename_checkpoint=f'check.pt'
 filename_loss=f'loss.pt'
 
-filename='entry50000.npy'
+#filename='entry50000.npy'
+filename='entry321200.npy'
 
 print('input/output files:',filename,filename_checkpoint,filename_loss)
 
@@ -27,15 +28,15 @@ print('input/output files:',filename,filename_checkpoint,filename_loss)
 #trials=30
 #output_width=95-9
 output_width=10
-hidden_size= 64
+hidden_size= 64*8
 num_hidden_layers=5
 LAYERS= [hidden_size for _ in range(num_hidden_layers+2)]
 LAYERS[0]=16
 
 LAYERS[-1]=output_width
 #LAYERS=[2*L-1,L*8*8,L*8*8,L*8*8,L*8*8,1]
-n_epochs = 250 #250   # number of epochs to run
-batch_size = 64*8 #10  # size of each batch
+n_epochs = 25000 #250   # number of epochs to run
+batch_size = 64*4 #10  # size of each batch
 #torch.set_printoptions(8)
 torch.set_printoptions(linewidth=140)
 
@@ -60,9 +61,9 @@ d = np.load(filename)
 
 d=torch.tensor(d)
 
-truncation = 1e-15
+#truncation = 1e-15
 
-d = d * (d.abs()>truncation) 
+#d = d * (d.abs()>truncation) 
 
 print('sample entry d[0]')
 print(d[0])
