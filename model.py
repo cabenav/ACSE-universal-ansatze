@@ -6,41 +6,33 @@ import torch.optim as optim
 import tqdm
 import torch
 
-#config
-L=5
-#folder='../../DMRG/tenpy/data'
+######################### config start ###############################
 folder='data'
-#filename=f'{folder}/data-ising-L{L}-1.pt'  # 41450 entries
-#filename=f'{folder}/data-ising-L{L}-2.pt'  # 84950 entries
 #filename=f'{folder}/data-ising-L5.dict.pt.array'
 #_=filename.split('/')[-1]
 #filename_checkpoint=f'result/{_}.32'
 #filename_loss=f'result/{_}.loss.32'
-filename_checkpoint=f'check.pt'
-filename_loss=f'loss.pt'
+folder='checkpoints'
+filename_checkpoint=f'{folder}/check.pt'
+filename_loss=f'{folder}/loss.pt'
 
 #filename='entry50000.npy'
-filename='entry321200.npy'
-
+#filename='entry321200.npy'
+filename='entry2295600.npy'
 print('input/output files:',filename,filename_checkpoint,filename_loss)
 
-# config
-#trials=30
-#output_width=95-9
 output_width=10
 hidden_size= 64*8
 num_hidden_layers=5
 LAYERS= [hidden_size for _ in range(num_hidden_layers+2)]
 LAYERS[0]=16
-
 LAYERS[-1]=output_width
-#LAYERS=[2*L-1,L*8*8,L*8*8,L*8*8,L*8*8,1]
 n_epochs = 25000 #250   # number of epochs to run
 batch_size = 64*4 #10  # size of each batch
 #torch.set_printoptions(8)
 torch.set_printoptions(linewidth=140)
-
 #torch.set_default_dtype(torch.float64)
+######################### config end   ###############################
 
 # Get cpu, gpu or mps device for training.
 device = (
@@ -55,39 +47,22 @@ device = (
 print(f"Using {device} device")
 
 
+# load training data
 #d = torch.load(filename)
-
 d = np.load(filename)
-
 d=torch.tensor(d)
-
-#truncation = 1e-15
-
-#d = d * (d.abs()>truncation) 
 
 print('sample entry d[0]')
 print(d[0])
-#d1=d[1]
 d=d.float()  #differ by 1e-9
-#d2=d[1]
-#print(d[1])
 
-#print(d1-d2.double())
-#X = d[:,:2*L-1]
-#y = d[:,2*L-1:2*L-1 + output_width]
 X = d[:,:16]
 y = d[:,-10:]
 
-#y=y.reshape((len(y),1))
-#X = d['X']
-#y = d['y']
-# X = X[:10000] #achieve same acc using 10000 entries instead of 40000 entries
-# y = y[:10000]
-print('y',y)
 
 print('data shape X Y',X.shape,y.shape)
 print(type(X),X.dtype)
-#torch.save(data,filename)
+
 X_test,y_test = X[:1000],y[:1000]
 print('test shape X Y',X_test.shape,y_test.shape)
 
