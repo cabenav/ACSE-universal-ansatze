@@ -7,20 +7,15 @@ import tqdm
 import torch
 
 ######################### config start ###############################
-folder='data'
-#filename=f'{folder}/data-ising-L5.dict.pt.array'
-#_=filename.split('/')[-1]
-#filename_checkpoint=f'result/{_}.32'
-#filename_loss=f'result/{_}.loss.32'
-folder='checkpoints'
-filename_checkpoint=f'{folder}/check.pt'
-filename_loss=f'{folder}/loss.pt'
-
-#filename='entry50000.npy'
-#filename='entry321200.npy'
-filename='entry2295600.npy'
-filename_prefix='data/m4'
-print('input/output files:',filename,filename_checkpoint,filename_loss,filename_prefix)
+data_folder='data'
+title='m4'
+filename_prefix=f'{data_folder}/{title}'
+result_folder='checkpoints'
+note='float32'
+filename_checkpoint=f'{result_folder}/{title}-{note}-check.pt'
+filename_loss=f'{result_folder}/{title}-{note}-loss.pt'
+print('title/note:',title,note)
+print('input/output files:',filename_prefix,filename_checkpoint,filename_loss)
 
 output_width=10
 hidden_size= 64*8
