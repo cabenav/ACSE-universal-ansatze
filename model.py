@@ -177,28 +177,3 @@ best_weights = None
 
 model_train(model, X, y, X_test, y_test, best_acc, best_weights)
 
-#for i in range(1):
-if True:
-    perm = torch.rand
-    indices = torch.randperm(X.size()[0])
-    X=X[indices]
-    y=y[indices]
-    X_test,y_test = X[-1000:],y[-1000:]
-    #modify test data set as well    
-    #acc = model_train(model, X[train], y[train], X[test], y[test])
-    best_acc,best_weights = model_train(model, X, y, X_test, y_test, best_acc, best_weights)
-    # restore model and return best accuracy
-
-    model.load_state_dict(best_weights) 
-    
-    acc=best_acc
-    print("Accuracy (wide): %.8f" % acc)
-    #cv_scores.append(acc.detach().cpu())
-    #break
-    
-# evaluate the model
-#print('historical acc',cv_scores)
-#cv_scores=np.array(cv_scores)
-#acc = np.mean(cv_scores)
-#std = np.std(cv_scores)
-#print("Model accuracy: %.2f%% (+/- %.2f%%)" % (acc*100, std*100))
