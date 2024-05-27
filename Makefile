@@ -1,11 +1,13 @@
+.PHONY: data train plot
 #python3.10 -m venv env
 #source env/bin/activate
 py	=env/bin/python
 
 all:train
 
+data:
+	$(py) data-generator-Mqubit.py
 GPU=5
-
 train:
 	CUDA_VISIBLE_DEVICES=${GPU} $(py) model.py
 plot:
