@@ -145,7 +145,7 @@ filesize_limit = 50 # in Mb
 filesize_limit_in_bytes = filesize_limit * 1.0e6 # in bytes
 ############################# config end  #################################
 
-print(f'filename_prefix: {filename_prefix}-<index>.npy')
+print(f'This code generate data and saves into filename_prefix: {filename_prefix}-<index>.npy')
 print(f'filesize_limit: {filesize_limit} Mb')
 print(f'num_threads: {num_threads} (x 4 scipy threads) = {num_threads * 4}')
 print(f'trials: {trials}')
