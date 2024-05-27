@@ -117,20 +117,36 @@ def generate(index=0):
     return data
 
 
+#### config
+trials = 100
+# scipy use defult omp threads=4 for each process. hence the actual cpu being used is num_threads * 4
+num_threads=16
+# block to save data
+block_size = num_threads * 100 
+filename='tmp.npy'
+
 from multiprocessing import Pool
 if __name__=="__main__":
     #generate(0)
     #exit()
     # start the loop here
-    trials = 100
-    num_threads=8
 
-    for _ in range(200):
+
+    for _ in range(trials):
         with Pool(num_threads) as p:
-            result = p.map(generate,list(range(trials)))
-            print(len(result))
-            print(result[1])
+            result = p.map(generate,list(range(block_size)))
+            #print(len(result))
+            #print(result[1])
+            data = np.array(result)
+            #print(data.shape)
             #print(p.map(f, [1, 2, 3]))
+            data_old = np.load(filename)
+            #print(data_old)
+            #print(data)
+            data_new = np.concatenate((data_old,data))            
+            np.save(filename,data_new)
+            print(f'data {data.shape} appended into {filename} {data_new.shape}')
+                
 
     
     
