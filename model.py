@@ -46,20 +46,16 @@ device = (
 # CUDA_VISIBLE_DEVICES=1,2 python myscript.py
 print(f"Using {device} device")
 
-
 # load training data
+print(f'loading data: {filename}')
 #d = torch.load(filename)
 d = np.load(filename)
 d=torch.tensor(d)
-
 print('sample entry d[0]')
 print(d[0])
 d=d.float()  #differ by 1e-9
-
 X = d[:,:16]
 y = d[:,-10:]
-
-
 print('data shape X Y',X.shape,y.shape)
 print(type(X),X.dtype)
 
@@ -89,32 +85,6 @@ class Deep(nn.Module):
         x = self.output(x)
         return x
 
-# check the percentage error in predicted output ( ground state energy)
-def acc_eval(y_pred,y_batch):
-    #print(torch.sqrt(((y_pred - y_batch)**2).mean()))
-    #print(torch.sqrt(((y_pred - y_batch)**2).mean())/ (y_batch))
-    #print(torch.sqrt(((y_pred - y_batch)**2).mean())/ (y_batch).mean() )
-    #print(torch.sqrt(((y_pred - y_batch)**2).mean())/ ((y_batch).mean()) )
-    #print(y_pred.mean(0))
-    #print(y_batch.mean(0))
-    #print( torch.sqrt(((y_pred - y_batch)**2) ) )
-    #print( torch.sqrt(((y_pred - y_batch)**2) ).mean(0)  )
-    #print(y_batch.mean(0))
-    delta_mean=torch.sqrt(((y_pred - y_batch)**2) ).mean(0)
-    y_batch_mean = y_batch.mean(0)
-    y_pred_mean  = y_pred.mean(0)
-    y_mean = y_batch_mean + y_pred_mean
-    #print(delta_mean/y_mean)
-    #print(  (delta_mean/y_mean).mean() )
-    #input()
-    acc = (delta_mean/y_mean).mean()
-    if acc > 0 :
-        acc = - acc
-    return  acc
-#return  torch.sqrt(((y_pred - y_batch)**2).mean())/ ((y_batch).mean())
-
-
-
 
 def model_train(model, X_train, y_train, X_val, y_val,best_acc=-np.inf,best_weights = None):
     for i in [X_train, y_train, X_val, y_val]:
@@ -125,10 +95,7 @@ def model_train(model, X_train, y_train, X_val, y_val,best_acc=-np.inf,best_weig
     loss_fn = nn.MSELoss()
     loss_list=[]
     optimizer = optim.Adam(model.parameters(), lr=0.0001)
-
-
     batch_start = torch.arange(0, len(X_train), batch_size)
-
 
     for epoch in range(n_epochs):
         model.train()
@@ -190,11 +157,8 @@ def model_train(model, X_train, y_train, X_val, y_val,best_acc=-np.inf,best_weig
     model.load_state_dict(best_weights)
     return best_acc,best_weights
 
-#from sklearn.model_selection import StratifiedKFold, train_test_split
 
 cv_scores = []
-#model = Deep().to(device)
-#for train, test in kfold.split(X,y[:,1]):
 
 # train the same model the the same data a few times
 layers=LAYERS    
@@ -206,7 +170,8 @@ print(model)
 best_acc = - np.inf   # init to negative infinity
 best_weights = None
 
-for i in range(1):
+#for i in range(1):
+if True:
     perm = torch.rand
     indices = torch.randperm(X.size()[0])
     X=X[indices]
@@ -221,12 +186,12 @@ for i in range(1):
     
     acc=best_acc
     print("Accuracy (wide): %.8f" % acc)
-    cv_scores.append(acc.detach().cpu())
+    #cv_scores.append(acc.detach().cpu())
     #break
     
 # evaluate the model
 #print('historical acc',cv_scores)
-cv_scores=np.array(cv_scores)
+#cv_scores=np.array(cv_scores)
 #acc = np.mean(cv_scores)
 #std = np.std(cv_scores)
 #print("Model accuracy: %.2f%% (+/- %.2f%%)" % (acc*100, std*100))
