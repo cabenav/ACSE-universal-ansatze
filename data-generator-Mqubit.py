@@ -53,13 +53,6 @@ def Be(a, b, c, d, e, f):
 w = np.array([0.4, 0.3, 0.2, 0.1])
 
 
-# start the loop here
-trials = 100
-num_threads=8
-
-#for _ in range(trials):
-#    with Pool(num_threads) as p:
-#        print(p.map(f, [1, 2, 3]))
 
 # Generate AllPauli array
 AllPauli = np.zeros((4, 4, 4, 4), dtype=complex)
@@ -68,7 +61,7 @@ for i in range(4):
         AllPauli[i, j] = kron(PauliMatrix[i], PauliMatrix[j])
 
 
-def generate():
+def generate(index):
     # Generate random real numbers in the range [-2, 2] and Hamiltonian
     RR = np.random.uniform(-2, 2, (4, 4))
     Aux = AllPauli * RR[:, :, np.newaxis, np.newaxis]
@@ -101,6 +94,13 @@ def generate():
         for i in range(4):
             v[i] = expm(G) @ v[i]
             Ene[m + 1, i] = expectation_value(v[i], Ham)
+    print(f'finish generating data for index = {index}')
+
+    #collect data and save as numpy array
+    RR.reshape
+    data=np.array
+    
+    return
     print("Eigenvalues:", eigvalsh(Ham))
     print("Computed eigenvalues:", Ene.real[1])
     print("Hamiltonian parameters:", RR) 
@@ -108,8 +108,21 @@ def generate():
     print("'Ansatz' parameters:", F.real[1])
 
 
+
+from multiprocessing import Pool
+
 if __name__=="__main__":
-    generate()
+    generate(0)
+    exit()
+    # start the loop here
+    trials = 100
+    num_threads=8
+    
+    for _ in range(trials):
+        with Pool(num_threads) as p:
+            p.map(generate,list(range(trials)))
+            #print(p.map(f, [1, 2, 3]))
+
 
             
 '''            
