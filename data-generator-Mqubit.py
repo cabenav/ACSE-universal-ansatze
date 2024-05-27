@@ -2,7 +2,7 @@ import numpy as np
 from scipy.linalg import expm, kron, eigvalsh
 from scipy.optimize import minimize
 import matplotlib.pyplot as plt
-
+import tqdm
 
 def generate(index=0):
 
@@ -174,11 +174,11 @@ if __name__=="__main__":
 
     for trial in range(trials):
         with Pool(num_threads) as p:
-            result = p.map(generate,list(range(block_size)))
+            result = list(tqdm.tqdm(p.imap(generate, range(block_size)), total=block_size))            
+            #result = p.map(generate,list(range(block_size)))
             data = np.array(result)
-            print('saving data...')
             filename, shape = append(filename_prefix,data)
-            print(f'{trial}/{trials} data {data.shape} appended into {filename} {shape}')
+            print(f'[{trial}/{trials}] data {data.shape} appended into {filename} {shape}')
                 
 
     
