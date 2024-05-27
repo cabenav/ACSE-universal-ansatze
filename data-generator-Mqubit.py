@@ -132,7 +132,7 @@ if __name__=="__main__":
     # start the loop here
 
 
-    for _ in range(trials):
+    for trial in range(trials):
         with Pool(num_threads) as p:
             result = p.map(generate,list(range(block_size)))
             #print(len(result))
@@ -145,7 +145,7 @@ if __name__=="__main__":
             #print(data)
             data_new = np.concatenate((data_old,data))            
             np.save(filename,data_new)
-            print(f'data {data.shape} appended into {filename} {data_new.shape}')
+            print(f'{trial}/{trials} data {data.shape} appended into {filename} {data_new.shape}')
                 
 
     
