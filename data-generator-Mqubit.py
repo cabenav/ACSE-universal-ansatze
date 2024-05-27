@@ -131,47 +131,54 @@ def generate(index=0):
     return data
 
 
-#### config
+############################# config start #################################
 trials = 1000
 # scipy use defult omp threads=4 for each process. hence the actual cpu being used is num_threads * 4
 num_threads=16
 # block to save data
-block_size = num_threads * 200 
-filename='tmp.npy'
+block_size = num_threads * 200
+folder='data'
+filename_prefix=f'{folder}/m4'
+#filename='tmp.npy'
+# discontribute data into list of files with limited filesize or avoid slow I/O
+filesize_limit = 10.0 # in Mb
+filesize_limit_in_bytes = filesize_limit * 1.0e6 # in bytes
+############################# config end  #################################
 
+print(f'filename_prefix: {filename_prefix}<index>.npy')
+print(f'filesize_limit: {filesize_limit} Mb')
+print(f'num_threads: {num_threads} (x 4 scipy threads) = {num_threads * 4}')
+print(f'trials: {trials}')
+print(f'block_size: {block_size}')
+
+import os
+def append(filename_prefix, array , filesize_limit = 100.0):
+    data = array
+    for i in range(1000):        
+        filename = f'{filename_prefix}-{i}.npy'
+        if os.path.exists(filename):
+            if (os.path.getsize(filename) > filesize_limit_in_bytes):
+                continue
+            else:
+                data_old = np.load(filename)
+                data = np.concatenate((data_old, array))            
+        np.save(filename, data)
+        return filename, data.shape
+    #print(f'{trial}/{trials} data {data.shape} appended into {filename} {data_new.shape}')
+
+import sys
 from multiprocessing import Pool
 if __name__=="__main__":
     #generate(0)
     #exit()
-    # start the loop here
-
 
     for trial in range(trials):
         with Pool(num_threads) as p:
             result = p.map(generate,list(range(block_size)))
-            #print(len(result))
-            #print(result[1])
             data = np.array(result)
-            #print(data.shape)
-            #print(p.map(f, [1, 2, 3]))
-            data_old = np.load(filename)
-            #print(data_old)
-            #print(data)
-            data_new = np.concatenate((data_old,data))            
-            np.save(filename,data_new)
-            print(f'{trial}/{trials} data {data.shape} appended into {filename} {data_new.shape}')
+            filename, shape = append(filename_prefix,data)
+            print(f'{trial}/{trials} data {data.shape} appended into {filename} {shape}')
                 
 
     
     
-'''    
-# Plot the results
-plt.plot(Ene[:, 0].real, label='Ene 1')
-plt.plot(Ene[:, 1].real, label='Ene 2')
-plt.plot(Ene[:, 2].real, label='Ene 3')
-plt.plot(Ene[:, 3].real, label='Ene 4')
-plt.legend()
-plt.xlabel('Iteration')
-plt.ylabel('Energy')
-plt.show()
-'''
