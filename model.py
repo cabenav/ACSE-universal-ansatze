@@ -19,7 +19,8 @@ filename_loss=f'{folder}/loss.pt'
 #filename='entry50000.npy'
 #filename='entry321200.npy'
 filename='entry2295600.npy'
-print('input/output files:',filename,filename_checkpoint,filename_loss)
+filename_prefix='data/m4'
+print('input/output files:',filename,filename_checkpoint,filename_loss,filename_prefix)
 
 output_width=10
 hidden_size= 64*8
@@ -46,10 +47,28 @@ device = (
 # CUDA_VISIBLE_DEVICES=1,2 python myscript.py
 print(f"Using {device} device")
 
+import os
+def load(filename_prefix):
+    data_list=[]
+    for i in range(1000):
+        filename = f'{filename_prefix}-{i}.npy'
+        if os.path.exists(filename):
+            data_list.append(np.load(filename))
+            #load file
+            pass
+    #concate
+    data = np.concatenate( data_list)
+    #data = np.concatenate( ( _ for _ in data_list) )
+    return data
+
+
+
+
 # load training data
-print(f'loading data: {filename}')
+print(f'loading data: {filename_prefix}')
 #d = torch.load(filename)
-d = np.load(filename)
+#d = np.load(filename)
+d = load('data/m4')
 d=torch.tensor(d,device=device)
 print('sample entry d[0]')
 print(d[0])
@@ -62,7 +81,7 @@ print(type(X),X.dtype)
 X_test,y_test = X[:1000],y[:1000]
 print('test shape X Y',X_test.shape,y_test.shape)
 
-#exit()
+exit()
 
 class Deep(nn.Module):
     def __init__(self,layers=[28*28,640,640,60,10]):
@@ -135,7 +154,7 @@ def model_train(model, X_train, y_train, X_val, y_val,best_acc=-np.inf,best_weig
         #X_val=X_val.to(device)
         #y_val=y_val.to(device)        
         y_pred = model(X_val)
-                #acc = ((y_pred>0) == y_val).type(torch.float).mean()
+        #acc = ((y_pred>0) == y_val).type(torch.float).mean()
         #acc = acc_eval(y_pred,y_val)
         loss = loss_fn(y_pred,y_val)
         loss_list.append(loss)
@@ -154,8 +173,6 @@ def model_train(model, X_train, y_train, X_val, y_val,best_acc=-np.inf,best_weig
             print('saving data')
             torch.save(best_weights,filename_checkpoint)
             print(f'weights saved into {filename_checkpoint} at epoch={epoch}, acc={acc}')
-    #skip best acc
-    #return acc
     # restore model and return best accuracy
     model.load_state_dict(best_weights)
     return best_acc,best_weights
