@@ -158,7 +158,7 @@ def model_train(model, X_train, y_train, X_val, y_val,best_acc=-np.inf,best_weig
     return best_acc,best_weights
 
 
-cv_scores = []
+#cv_scores = []
 
 # train the same model the the same data a few times
 layers=LAYERS    
@@ -169,6 +169,8 @@ print(model)
 # Hold the best model
 best_acc = - np.inf   # init to negative infinity
 best_weights = None
+
+model_train(model, X, y, X_test, y_test, best_acc, best_weights)
 
 #for i in range(1):
 if True:
