@@ -132,11 +132,11 @@ def generate(index=0):
 
 
 #### config
-trials = 100
+trials = 1000
 # scipy use defult omp threads=4 for each process. hence the actual cpu being used is num_threads * 4
 num_threads=16
 # block to save data
-block_size = num_threads * 100 
+block_size = num_threads * 200 
 filename='tmp.npy'
 
 from multiprocessing import Pool
