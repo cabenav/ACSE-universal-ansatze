@@ -164,17 +164,21 @@ def model_train(model, X_train, y_train, X_val, y_val,best_acc=-np.inf,best_weig
         print(f'loss list saved into {filename_loss}')
         acc = - loss
         #print( ((y_pred-y_val)/y_val).abs() )
-        
-        print(y_pred)
-        print(y_pred-y_val)
-        print(y_val)
+
+        print('target:')
+        print((y_val)[0])
+        print('prediction:')
+        print(y_pred[0])
+        print('diff:')
+        print((y_pred-y_val)[0])
+
         if acc > best_acc:
             best_acc = acc
             best_weights = copy.deepcopy(model.state_dict())
             #save into file
             print('saving data')
             torch.save(best_weights,filename_checkpoint)
-            print(f'weights saved into {filename_checkpoint} at epoch={epoch}, acc={acc}')
+            print(f'best weights saved into {filename_checkpoint} at epoch={epoch}, acc={acc}')
     # restore model and return best accuracy
     model.load_state_dict(best_weights)
     return best_acc,best_weights
