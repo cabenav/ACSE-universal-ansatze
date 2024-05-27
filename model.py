@@ -7,15 +7,6 @@ import tqdm
 import torch
 
 ######################### config start ###############################
-data_folder='data'
-title='m4'
-filename_prefix=f'{data_folder}/{title}'
-result_folder='checkpoints'
-note='float32'
-filename_checkpoint=f'{result_folder}/{title}-{note}-check.pt'
-filename_loss=f'{result_folder}/{title}-{note}-loss.pt'
-print('title/note:',title,note)
-print('input/output files:',filename_prefix,filename_checkpoint,filename_loss)
 
 output_width=10
 hidden_size= 64*8
@@ -24,10 +15,24 @@ LAYERS= [hidden_size for _ in range(num_hidden_layers+2)]
 LAYERS[0]=16
 LAYERS[-1]=output_width
 n_epochs = 25000 #250   # number of epochs to run
-batch_size = 64*4 * 8 #10  # size of each batch
+batch_size = 64*4 * 4 #10  # size of each batch
 #torch.set_printoptions(8)
 torch.set_printoptions(linewidth=140)
 #torch.set_default_dtype(torch.float64)
+
+data_folder='data'
+title='m4'
+filename_prefix=f'{data_folder}/{title}'
+result_folder='checkpoints'
+note=f'float32-batchsize{batch_size}-layers{"_".join( str(_) for _ in LAYERS)}'
+filename_checkpoint=f'{result_folder}/{title}-{note}-check.pt'
+filename_loss=f'{result_folder}/{title}-{note}-loss.pt'
+print('title/note:',title,note)
+print('input/output files:',filename_prefix,filename_checkpoint,filename_loss)
+
+
+
+
 ######################### config end   ###############################
 
 # Get cpu, gpu or mps device for training.
