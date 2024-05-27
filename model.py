@@ -99,6 +99,11 @@ def model_train(model, X_train, y_train, X_val, y_val,best_acc=-np.inf,best_weig
 
     for epoch in range(n_epochs):
         model.train()
+        # permutate input data order randomly
+        indices = torch.randperm(X_train.size()[0])
+        X_train=X_train[indices]
+        y_train=y_train[indices]
+        X_test,y_test = X_train[-1000:],y_train[-1000:]
         with tqdm.tqdm(batch_start, unit="batch", mininterval=0, disable=False) as bar:
             bar.set_description(f"Epoch {epoch}/{n_epochs}")            
             for start in bar:
