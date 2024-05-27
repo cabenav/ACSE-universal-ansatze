@@ -29,7 +29,7 @@ LAYERS= [hidden_size for _ in range(num_hidden_layers+2)]
 LAYERS[0]=16
 LAYERS[-1]=output_width
 n_epochs = 25000 #250   # number of epochs to run
-batch_size = 64*4 #10  # size of each batch
+batch_size = 64*4 * 8 #10  # size of each batch
 #torch.set_printoptions(8)
 torch.set_printoptions(linewidth=140)
 #torch.set_default_dtype(torch.float64)
@@ -74,10 +74,11 @@ y = d[:,-10:]
 print('data shape X Y',X.shape,y.shape)
 print(type(X),X.dtype)
 
+#for evaluation
 X_test,y_test = X[:1000],y[:1000]
 print('test shape X Y',X_test.shape,y_test.shape)
 
-exit()
+#exit()
 
 class Deep(nn.Module):
     def __init__(self,layers=[28*28,640,640,60,10]):
@@ -153,8 +154,13 @@ def model_train(model, X_train, y_train, X_val, y_val,best_acc=-np.inf,best_weig
         #acc = ((y_pred>0) == y_val).type(torch.float).mean()
         #acc = acc_eval(y_pred,y_val)
         loss = loss_fn(y_pred,y_val)
-        loss_list.append(loss)
-        torch.save(loss_list,filename_loss)
+        loss_list.append( loss.detach().cpu().item() )
+        #loss_list.append( loss.numpy() )
+        loss_np_array = np.array(loss_list)
+        #print(loss_list)
+        #print(loss_np_array)
+        torch.save(loss_np_array,filename_loss)
+        #torch.save(loss_list,filename_loss)
         print(f'loss list saved into {filename_loss}')
         acc = - loss
         #print( ((y_pred-y_val)/y_val).abs() )
