@@ -52,50 +52,70 @@ def Be(a, b, c, d, e, f):
 # Initialize w
 w = np.array([0.4, 0.3, 0.2, 0.1])
 
+
+# start the loop here
+trials = 100
+num_threads=8
+
+#for _ in range(trials):
+#    with Pool(num_threads) as p:
+#        print(p.map(f, [1, 2, 3]))
+
 # Generate AllPauli array
 AllPauli = np.zeros((4, 4, 4, 4), dtype=complex)
 for i in range(4):
     for j in range(4):
         AllPauli[i, j] = kron(PauliMatrix[i], PauliMatrix[j])
 
-# Generate random real numbers in the range [-2, 2] and Hamiltonian
-RR = np.random.uniform(-2, 2, (4, 4))
-Aux = AllPauli * RR[:, :, np.newaxis, np.newaxis]
-Ham = np.zeros((4, 4), dtype=complex)
-for i in range(4):
-    for j in range(4):
-        Ham += Aux[i, j]
 
-# Take the real part of Ham
-Ham = Ham.real
-# Print the matrix form of Ham
-
-
-# Calculate initial expectation values
-for i in range(4):
-    Ene[0, i] = expectation_value(v[i], Ham)
-
-# Perform the optimization loop
-for m in range(3):
-    def fun_to_minimize(params):
-        a, b, c, d, e, f = params
-        total = 0
-        for j in range(4):
-            total += w[j] * expectation_value(expm(Be(a, b, c, d, e, f)) @ v[j], Ham)
-        return total.real    
-    res = minimize(fun_to_minimize, np.zeros(6))
-    F[m] = res.x
-    G = sum(res.x[i] * A[i] for i in range(6))
-    
+def generate():
+    # Generate random real numbers in the range [-2, 2] and Hamiltonian
+    RR = np.random.uniform(-2, 2, (4, 4))
+    Aux = AllPauli * RR[:, :, np.newaxis, np.newaxis]
+    Ham = np.zeros((4, 4), dtype=complex)
     for i in range(4):
-        v[i] = expm(G) @ v[i]
-        Ene[m + 1, i] = expectation_value(v[i], Ham)
+        for j in range(4):
+            Ham += Aux[i, j]
 
+    # Take the real part of Ham
+    Ham = Ham.real
+    # Print the matrix form of Ham
+
+
+    # Calculate initial expectation values
+    for i in range(4):
+        Ene[0, i] = expectation_value(v[i], Ham)
+
+    # Perform the optimization loop
+    for m in range(3):
+        def fun_to_minimize(params):
+            a, b, c, d, e, f = params
+            total = 0
+            for j in range(4):
+                total += w[j] * expectation_value(expm(Be(a, b, c, d, e, f)) @ v[j], Ham)
+                return total.real    
+        res = minimize(fun_to_minimize, np.zeros(6))
+        F[m] = res.x
+        G = sum(res.x[i] * A[i] for i in range(6))
+    
+        for i in range(4):
+            v[i] = expm(G) @ v[i]
+            Ene[m + 1, i] = expectation_value(v[i], Ham)
+    print("Eigenvalues:", eigvalsh(Ham))
+    print("Computed eigenvalues:", Ene.real[1])
+    print("Hamiltonian parameters:", RR) 
+    print("'Ansatz' parameters:", F.real[0])
+    print("'Ansatz' parameters:", F.real[1])
+
+
+if __name__=="__main__":
+    generate()
+
+            
+'''            
 print(RR) 
 print(F.real[0])
 print(F.real[1])
-
-
 
 print("Eigenvalues:", eigvalsh(Ham))
 print("Computed eigenvalues:", Ene.real[1])
@@ -112,4 +132,4 @@ plt.legend()
 plt.xlabel('Iteration')
 plt.ylabel('Energy')
 plt.show()
-
+'''
