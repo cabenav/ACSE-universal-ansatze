@@ -16,4 +16,4 @@ nvtop:
 
 #sync figs to weilei's macbook
 rsync:
-        rsync -rP root@10.200.69.64:/root/weilei/ACSE-universal-ansatze/fig/ fig
+	rsync -rP root@10.200.69.64:/root/weilei/ACSE-universal-ansatze/fig/ fig
