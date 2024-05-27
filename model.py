@@ -50,7 +50,7 @@ print(f"Using {device} device")
 print(f'loading data: {filename}')
 #d = torch.load(filename)
 d = np.load(filename)
-d=torch.tensor(d)
+d=torch.tensor(d,device=device)
 print('sample entry d[0]')
 print(d[0])
 d=d.float()  #differ by 1e-9
@@ -108,13 +108,14 @@ def model_train(model, X_train, y_train, X_val, y_val,best_acc=-np.inf,best_weig
                 # take a batch
                 X_batch = X_train[start:start+batch_size]
                 y_batch = y_train[start:start+batch_size]
-                X_batch,y_batch = X_batch.to(device),y_batch.to(device)
+                #X_batch,y_batch = X_batch.to(device),y_batch.to(device)
                 #print('X_batch.shape',X_batch.shape)
                 
                 # forward pass
                 y_pred = model(X_batch)
                 #print(y_pred.shape,y_batch.shape)
                 loss = loss_fn(y_pred, y_batch)
+                
                 # backward pass
                 optimizer.zero_grad()
                 loss.backward()
@@ -131,8 +132,8 @@ def model_train(model, X_train, y_train, X_val, y_val,best_acc=-np.inf,best_weig
                 )
         # evaluate accuracy at end of each epoch
         model.eval()
-        X_val=X_val.to(device)
-        y_val=y_val.to(device)        
+        #X_val=X_val.to(device)
+        #y_val=y_val.to(device)        
         y_pred = model(X_val)
                 #acc = ((y_pred>0) == y_val).type(torch.float).mean()
         #acc = acc_eval(y_pred,y_val)
