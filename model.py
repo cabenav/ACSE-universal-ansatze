@@ -90,8 +90,6 @@ def model_train(model, X_train, y_train, X_val, y_val,best_acc=-np.inf,best_weig
     for i in [X_train, y_train, X_val, y_val]:
         print(i.shape)
     # loss function and optimizer
-    ##loss_fn = nn.BCELoss()  # binary cross entropy
-    #loss_fn = nn.CrossEntropyLoss()
     loss_fn = nn.MSELoss()
     loss_list=[]
     optimizer = optim.Adam(model.parameters(), lr=0.0001)
@@ -112,9 +110,8 @@ def model_train(model, X_train, y_train, X_val, y_val,best_acc=-np.inf,best_weig
                 y_batch = y_train[start:start+batch_size]
                 X_batch,y_batch = X_batch.to(device),y_batch.to(device)
                 #print('X_batch.shape',X_batch.shape)
-                # forward pass
-
                 
+                # forward pass
                 y_pred = model(X_batch)
                 #print(y_pred.shape,y_batch.shape)
                 loss = loss_fn(y_pred, y_batch)
