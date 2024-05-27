@@ -141,11 +141,11 @@ folder='data'
 filename_prefix=f'{folder}/m4'
 #filename='tmp.npy'
 # discontribute data into list of files with limited filesize or avoid slow I/O
-filesize_limit = 10.0 # in Mb
+filesize_limit = 50 # in Mb
 filesize_limit_in_bytes = filesize_limit * 1.0e6 # in bytes
 ############################# config end  #################################
 
-print(f'filename_prefix: {filename_prefix}<index>.npy')
+print(f'filename_prefix: {filename_prefix}-<index>.npy')
 print(f'filesize_limit: {filesize_limit} Mb')
 print(f'num_threads: {num_threads} (x 4 scipy threads) = {num_threads * 4}')
 print(f'trials: {trials}')
@@ -176,6 +176,7 @@ if __name__=="__main__":
         with Pool(num_threads) as p:
             result = p.map(generate,list(range(block_size)))
             data = np.array(result)
+            print('saving data...')
             filename, shape = append(filename_prefix,data)
             print(f'{trial}/{trials} data {data.shape} appended into {filename} {shape}')
                 
