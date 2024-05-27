@@ -48,20 +48,16 @@ device = (
 print(f"Using {device} device")
 
 import os
-def load(filename_prefix):
+import glob
+def load(filename_prefix): #loadd all files with this filename prefix
+    filelist = glob.glob(f'{filename_prefix}*.npy')
+    print(f'loading {len(filelist)} data files')
+    print('get file list',filelist)
     data_list=[]
-    for i in range(1000):
-        filename = f'{filename_prefix}-{i}.npy'
-        if os.path.exists(filename):
-            data_list.append(np.load(filename))
-            #load file
-            pass
-    #concate
+    for filename in filelist:
+        data_list.append(np.load(filename))
     data = np.concatenate( data_list)
-    #data = np.concatenate( ( _ for _ in data_list) )
     return data
-
-
 
 
 # load training data
