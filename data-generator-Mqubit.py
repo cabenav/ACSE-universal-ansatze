@@ -113,6 +113,20 @@ def generate(index=0):
         Ene.real[1],
         F.real[0],
     ))
+    '''
+    # data size
+    print(
+        RR.flatten().shape,
+        Ham.flatten().shape,
+        Ene.real[1].shape,
+        F.real[0].shape,
+    )
+    print(data.shape)
+    # output
+    # (16,) (16,) (4,) (6,)
+    # (42,)
+    exit(0)
+    '''
     #print(data)
     return data
 
