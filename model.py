@@ -7,7 +7,7 @@ import tqdm
 import torch
 
 ######################### config start ###############################
-hidden_size= 64*8
+hidden_size= 64 * 4 
 num_hidden_layers=5
 LAYERS= [hidden_size for _ in range(num_hidden_layers+2)]
 LAYERS[0]=16
@@ -22,7 +22,7 @@ data_folder='data'
 title='m4'
 filename_prefix=f'{data_folder}/{title}'
 result_folder='checkpoints'
-note=f'no-shuffle-f32-bs{batch_size}-layers{"_".join( str(_) for _ in LAYERS)}'
+note=f'test-lr0.001-no-shuffle-f32-bs{batch_size}-layers{"_".join( str(_) for _ in LAYERS)}'
 filename_checkpoint=f'{result_folder}/{title}-{note}-check.pt'
 filename_loss=f'{result_folder}/{title}-{note}-loss.pt'
 print('title/note:',title,note)
@@ -49,8 +49,10 @@ def load(filename_prefix): #loadd all files with this filename prefix
     print('get file list',filelist)
     data_list=[]
     for filename in filelist:
-        data_list.append(np.load(filename))
-    data = np.concatenate( data_list)
+        _data=np.load(filename)
+        assert _data.shape[1] == 42
+        data_list.append(_data)
+    data = np.concatenate(data_list)
     return data
 
 
@@ -67,8 +69,9 @@ X = d[:,:16]
 y = d[:,-6:]    #parameters
 
 # use the last 1000 for evaluation
-X_test,y_test = X[-1000:],y[-1000:] 
-X,y = X[:-1000],y[:-1000]
+eval_size=d.shape[0]//20
+X_test,y_test = X[-eval_size:],y[-eval_size:] 
+X,y = X[:-eval_size],y[:-eval_size]
 
 print(type(X),X.dtype)
 print('data shape X Y',X.shape,y.shape)
@@ -103,11 +106,11 @@ def model_train(model, X_train, y_train, X_val, y_val,best_acc=-np.inf,best_weig
     # loss function and optimizer
     loss_fn = nn.MSELoss()
     loss_list=[]
-    optimizer = optim.Adam(model.parameters(), lr=0.0001)
+    optimizer = optim.Adam(model.parameters(), lr=0.001)
     batch_start = torch.arange(0, len(X_train), batch_size)
     for epoch in range(n_epochs):
         model.train()
-        if False: # whether to shuffe the data
+        if False: # whether to shuffle the data
             # permutate input data order randomly
             indices = torch.randperm(X_train.size()[0])
             X_train=X_train[indices]
@@ -143,7 +146,7 @@ def model_train(model, X_train, y_train, X_val, y_val,best_acc=-np.inf,best_weig
         loss_list.append( loss.detach().cpu().item() )
         loss_np_array = np.array(loss_list)
         torch.save(loss_np_array,filename_loss)
-        print(f'loss list saved into {filename_loss}')
+        print(f'loss list saved into {filename_loss} at loss={loss_np_array[-1]}')
         acc = - loss
 
         print('target:')
