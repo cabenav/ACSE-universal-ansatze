@@ -1,4 +1,4 @@
-.PHONY: data train plot
+.PHONY: data train plot plot-all test
 #python3.10 -m venv env
 #source env/bin/activate
 py	=env/bin/python
@@ -7,7 +7,7 @@ all:model
 
 data:
 	$(py) data-generator-Mqubit.py
-GPU=2
+GPU=4
 model:
 	CUDA_VISIBLE_DEVICES=${GPU} $(py) model.py
 #make f=<> plot
@@ -24,3 +24,5 @@ rsync:
 
 backup:
 	rsync -rP . ../backup/ACSE-universal-ansatze/20250528/ --exclude env --exclude .git
+test:
+	$(py) test.py
