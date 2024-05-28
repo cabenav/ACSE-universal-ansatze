@@ -40,12 +40,17 @@ while len(data) > 2000:
     scale = scale * 10
 
 # increase sigma you can get a more smoothed function.
-from scipy.ndimage.filters import gaussian_filter1d
-data = gaussian_filter1d(data, sigma=2)
+from scipy.ndimage import gaussian_filter1d
+#data = gaussian_filter1d(data, sigma=2)
 
 plt.figure()
-plt.plot(data, label='loss')
-plt.ylim(0.001, 0.5)
+print(data.shape)
+
+if data.shape[1] == 2:
+    plt.plot(data, label=['validation loss','training loss'])
+else:
+    plt.plot(data, label='validation loss')
+plt.ylim(0.008, 0.5)
 
 plt.title(filename)
 plt.ylabel("Loss /log")
