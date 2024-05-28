@@ -7,13 +7,14 @@ all:model
 
 data:
 	$(py) data-generator-Mqubit.py
-GPU=1
+GPU=2
 model:
 	CUDA_VISIBLE_DEVICES=${GPU} $(py) model.py
-#make filename_loss=<> plot
+#make f=<> plot
 plot:
-	$(py) plot.py ${filename_loss}
-
+	$(py) plot.py ${f}
+plot-all:
+	$(py) all-plots.py
 nvtop:
 	nvidia-smi |head -n 15
 
