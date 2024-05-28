@@ -56,9 +56,6 @@ def load(filename_prefix): #loadd all files with this filename prefix
 
 # load training data
 print(f'loading data: {filename_prefix}')
-#d = torch.load(filename)
-#d = np.load(filename)
-#d = load('data/m4')
 d = load(filename_prefix)
 d = d[:int(1e6)] # maximum 1 million data
 d = torch.tensor(d,device=device)
@@ -66,8 +63,8 @@ print('sample entry d[0]')
 print(d[0])
 d=d.float()  #differ by 1e-9
 X = d[:,:16]
-#y = d[:,-10:]
-y = d[:,-6:]
+#y = d[:,-10:]  #energy and parameters
+y = d[:,-6:]    #parameters
 
 # use the last 1000 for evaluation
 X_test,y_test = X[-1000:],y[-1000:] 
@@ -108,7 +105,6 @@ def model_train(model, X_train, y_train, X_val, y_val,best_acc=-np.inf,best_weig
     loss_list=[]
     optimizer = optim.Adam(model.parameters(), lr=0.0001)
     batch_start = torch.arange(0, len(X_train), batch_size)
-    #X_test,y_test = X_train[-1000:],y_train[-1000:]    
     for epoch in range(n_epochs):
         model.train()
         if False: # whether to shuffe the data
@@ -116,7 +112,6 @@ def model_train(model, X_train, y_train, X_val, y_val,best_acc=-np.inf,best_weig
             indices = torch.randperm(X_train.size()[0])
             X_train=X_train[indices]
             y_train=y_train[indices]
-            #X_test,y_test = X_train[-1000:],y_train[-1000:]
         with tqdm.tqdm(batch_start, unit="batch", mininterval=0, disable=False) as bar:
             bar.set_description(f"Epoch {epoch}/{n_epochs}")            
             for start in bar:
@@ -143,22 +138,13 @@ def model_train(model, X_train, y_train, X_val, y_val,best_acc=-np.inf,best_weig
                 bar.set_postfix(loss=float(loss), best_acc = float(best_acc),acc=float(acc))
         # evaluate accuracy at end of each epoch
         model.eval()
-        #X_val=X_val.to(device)
-        #y_val=y_val.to(device)        
         y_pred = model(X_val)
-        #acc = ((y_pred>0) == y_val).type(torch.float).mean()
-        #acc = acc_eval(y_pred,y_val)
         loss = loss_fn(y_pred,y_val)
         loss_list.append( loss.detach().cpu().item() )
-        #loss_list.append( loss.numpy() )
         loss_np_array = np.array(loss_list)
-        #print(loss_list)
-        #print(loss_np_array)
         torch.save(loss_np_array,filename_loss)
-        #torch.save(loss_list,filename_loss)
         print(f'loss list saved into {filename_loss}')
         acc = - loss
-        #print( ((y_pred-y_val)/y_val).abs() )
 
         print('target:')
         print((y_val)[0])
@@ -173,17 +159,12 @@ def model_train(model, X_train, y_train, X_val, y_val,best_acc=-np.inf,best_weig
             #save into file
             print('saving data')
             torch.save(best_weights,filename_checkpoint)
-            print(f'best weights saved into {filename_checkpoint} at epoch={epoch}, acc={acc}')
-    # restore model and return best accuracy
-    model.load_state_dict(best_weights)
+            print(f'best weights saved into {filename_checkpoint} at epoch={epoch}, acc={acc}')            
+    model.load_state_dict(best_weights)   # restore model and return best accuracy
     return best_acc,best_weights
 
 
-#cv_scores = []
-
-# train the same model the the same data a few times
-layers=LAYERS    
-model = Deep(layers).to(device)
+model = Deep(LAYERS).to(device)
 print(model)
 print(f'batch_size={batch_size}')
 
