@@ -7,10 +7,10 @@ all:model
 
 data:
 	$(py) data-generator-Mqubit.py
-GPU=5
+GPU=1
 model:
 	CUDA_VISIBLE_DEVICES=${GPU} $(py) model.py
-
+#make filename_loss=<> plot
 plot:
 	$(py) plot.py ${filename_loss}
 
@@ -20,3 +20,6 @@ nvtop:
 #sync figs to weilei's macbook
 rsync:
 	rsync -rP root@10.200.69.64:/root/weilei/ACSE-universal-ansatze/fig/ fig
+
+backup:
+	rsync -rP . ../backup/ACSE-universal-ansatze/20250528/ --exclude env --exclude .git
