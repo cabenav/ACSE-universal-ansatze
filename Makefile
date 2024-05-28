@@ -3,15 +3,16 @@
 #source env/bin/activate
 py	=env/bin/python
 
-all:train
+all:model
 
 data:
 	$(py) data-generator-Mqubit.py
 GPU=5
-train:
+model:
 	CUDA_VISIBLE_DEVICES=${GPU} $(py) model.py
+
 plot:
-	$(py) plot.py
+	$(py) plot.py ${filename_loss}
 
 nvtop:
 	nvidia-smi |head -n 15
