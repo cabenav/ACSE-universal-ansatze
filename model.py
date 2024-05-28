@@ -22,7 +22,7 @@ data_folder='data'
 title='m4'
 filename_prefix=f'{data_folder}/{title}'
 result_folder='checkpoints'
-note=f'test3-LeakyReLU-lr0.001-no-shuffle-f16-bs{batch_size}-layers{"_".join( str(_) for _ in LAYERS)}'
+note=f'test3-LeakyReLU-lr0.01-shuffle-f32-bs{batch_size}-layers{"_".join( str(_) for _ in LAYERS)}'
 filename_checkpoint=f'{result_folder}/{title}-{note}-check.pt'
 filename_loss=f'{result_folder}/{title}-{note}-loss.pt'
 print('title/note:',title,note)
@@ -66,9 +66,9 @@ d = torch.tensor(d,device=device)
 print('sample entry d[0]')
 print(d[0])
 
-torch.set_default_dtype(torch.float16)
-#d=d.float()  #differ by 1e-9
-d=d.half()  # half precision for fast training on large nn
+#torch.set_default_dtype(torch.float16)
+d=d.float()  #differ by 1e-9
+#d=d.half()  # half precision for fast training on large nn
 X = d[:,:16]
 #y = d[:,-10:]  #energy and parameters
 y = d[:,-6:]    #parameters
@@ -115,7 +115,7 @@ def model_train(model, X_train, y_train, X_val, y_val,best_acc=-np.inf,best_weig
     batch_start = torch.arange(0, len(X_train), batch_size)
     for epoch in range(n_epochs):
         model.train()
-        if False: # whether to shuffle the data
+        if True: # whether to shuffle the data
             # permutate input data order randomly
             indices = torch.randperm(X_train.size()[0])
             X_train=X_train[indices]
@@ -191,7 +191,7 @@ best_weights = None
 # loss function and optimizer
 loss_fn = nn.MSELoss()
 #optimizer = optim.Adam(model.parameters(), lr=0.001)
-optimizer = optim.SGD(model.parameters(), lr=0.1)
+optimizer = optim.SGD(model.parameters(), lr=0.01)
 
 # load previous result for continuous training
 if True:
