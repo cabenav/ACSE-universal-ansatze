@@ -81,7 +81,7 @@ for m in range(3):
         a, b, c, d, e, f = params
         total = 0
         for j in range(4):
-            total += w[j] * expectation_value(expm(Be(a, b, c, d, e, f)) @ v[j], Ham)
+            total += w[j] *expectation_value(expm(Be(a, b, c, d, e, f)) @ v[j], Ham)
         return total.real    
     res = minimize(fun_to_minimize, np.zeros(6))
     F[m] = res.x
