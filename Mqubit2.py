@@ -71,9 +71,9 @@ for i in range(2**M):
 for m in range(it):
     def fun_to_minimize(params1): 
        if M == 2: 
-          return sum(w[j] * expectation_value(expm(Be2(np.reshape(params1, (4,4)))) @ v[j], Ham) for j in range(2**M)).real
+          return sum(w[j] * expectation_value(expm(Be2(np.reshape(params1,(4,4)))) @ v[j], Ham) for j in range(2**M)).real
        elif M== 3: 
-          return sum(w[j] * expectation_value(expm(Be3(np.reshape(params1, (4,4,4)))) @ v[j], Ham) for j in range(2**M)).real   
+          return sum(w[j] * expectation_value(expm(Be3(np.reshape(params1,(4,4,4)))) @ v[j], Ham) for j in range(2**M)).real   
     if M==2:
        res = minimize(fun_to_minimize, np.zeros(16))
        F[m] = res.x
