@@ -2,46 +2,48 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-#config
-L=5
-folder='../../DMRG/tenpy/data'
-filename=f'{folder}/data-ising-L{L}-1.pt'  # 41450 entries
-filename=f'{folder}/data-ising-L{L}-2.pt'  # 84950 entries
-filename=f'{folder}/data-ising-L5.dict.pt.array'
-_=filename.split('/')[-1]
+# config
+result_folder='checkpoints'
+filename='m4-float32-batchsize2048-layers16_512_512_512_512_512_10-loss.pt'
+filename='m4-float32-batchsize512-layers16_512_512_512_512_512_10-loss.pt'
+#filename='m4-float32-batchsize1024-layers16_512_512_512_512_512_10-loss.pt'
+filename_loss=f'{result_folder}/{filename}'
+fig_folder='fig'
+filename_fig =f'{fig_folder}/{filename}.pdf'
 
-filename_checkpoint=f'result/{_}.32'
-filename_loss=f'result/{_}.loss.32'
-filename_loss = 'loss.pt'
+# print local variables
+local=locals().copy()
+for k in local:
+    if k[0:2] != '__':
+        print(f'{k}:\t{local[k]}')
 
-print('input/output files:',filename,filename_checkpoint,filename_loss)
+#print('input/output files:',filename_prefix,filename_checkpoint,filename_loss)
+
+
+#folder='checkpoints'
+#filename_loss = '{folder}loss.pt'
+#filename_fig = ''
+#print('input/output files:',filename,filename_checkpoint,filename_loss)
 
 import torch
+#loss_list
+loss_np_array = torch.load(filename_loss)
+#print(loss_list[:10])
+#a = torch.tensor(loss_list)
+#print(a[:10])
 
-loss_list = torch.load(filename_loss)
-print(loss_list[:10])
-a = torch.tensor(loss_list)
-print(a[:10])
 
-#data = np.array(loss_list)
-#data = loss_list.cpu()
-#print(data)
-
-data=a
+data=loss_np_array
+print('sample of 10 data points')
+print(data[:10])
 plt.figure()
-plt.plot(data)
+plt.plot(data, label='loss')
 
-plt.title(filename_loss)
+plt.title(filename)
 plt.ylabel("Loss /log")
 plt.xlabel("Epoches")
 plt.yscale('log')
-#plt.legend(loc=0);
-plt.savefig('fig/loss.pdf')
+plt.legend(loc=0);
+plt.savefig(filename_fig)
 
-def plot():
-    torch.load(filename_loss)
-    
-
-if __name__=="__main__":
-    #plot()
-    print('done')
+print(f'{filename_loss} has been ploted and saved into {filename_fig}')
