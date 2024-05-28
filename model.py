@@ -7,7 +7,7 @@ import tqdm
 import torch
 
 ######################### config start ###############################
-hidden_size= 64 * 8 
+hidden_size= 64 * 8 * 8
 num_hidden_layers=5
 LAYERS= [hidden_size for _ in range(num_hidden_layers+2)]
 LAYERS[0]=16
@@ -22,7 +22,7 @@ data_folder='data'
 title='m4'
 filename_prefix=f'{data_folder}/{title}'
 result_folder='checkpoints'
-note=f'test3-lr0.001-no-shuffle-f32-bs{batch_size}-layers{"_".join( str(_) for _ in LAYERS)}'
+note=f'test3-LeakyReLU-lr0.001-no-shuffle-f32-bs{batch_size}-layers{"_".join( str(_) for _ in LAYERS)}'
 filename_checkpoint=f'{result_folder}/{title}-{note}-check.pt'
 filename_loss=f'{result_folder}/{title}-{note}-loss.pt'
 print('title/note:',title,note)
@@ -90,7 +90,8 @@ class Deep(nn.Module):
             layer0 = layers[i]
             layer1 = layers[i+1]
             layer = nn.Linear(layer0,layer1)
-            act = nn.ReLU()
+            #act = nn.ReLU()
+            act = nn.LeakyReLU()
             modules.append(layer)
             modules.append(act)
         self.linear_relu_stack = nn.Sequential(*modules)
