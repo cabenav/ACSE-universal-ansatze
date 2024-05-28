@@ -13,7 +13,7 @@ LAYERS= [hidden_size for _ in range(num_hidden_layers+2)]
 LAYERS[0]=16
 LAYERS[-1]=6
 n_epochs = 25000 #250   # number of epochs to run
-batch_size = 64*4 * 2 #10  # size of each batch
+batch_size = 64*4 * 2 * 8 #10  # size of each batch
 #torch.set_printoptions(8)
 torch.set_printoptions(linewidth=140)
 #torch.set_default_dtype(torch.float64)
@@ -105,10 +105,9 @@ class Deep(nn.Module):
 def model_train(model, X_train, y_train, X_val, y_val,best_acc=-np.inf,best_weights = None):
     for i in [X_train, y_train, X_val, y_val]:
         print(i.shape)
-    # loss function and optimizer
-    loss_fn = nn.MSELoss()
     loss_list=[]
-    optimizer = optim.Adam(model.parameters(), lr=0.001)
+    
+
     batch_start = torch.arange(0, len(X_train), batch_size)
     for epoch in range(n_epochs):
         model.train()
@@ -185,7 +184,24 @@ print(f'batch_size={batch_size}')
 best_acc = - np.inf   # init to negative infinity
 best_weights = None
 
+# loss function and optimizer
+loss_fn = nn.MSELoss()
+optimizer = optim.Adam(model.parameters(), lr=0.001)
+
 # load previous result for continuous training
+if True:
+    try:
+        best_weights = torch.load(filename_checkpoint)
+        model.load_state_dict(best_weights)
+        
+        
+        model.eval()
+        y_pred = model(X_test)
+        loss = loss_fn(y_pred,y_test)
+        best_acc = - loss
+        print('loaded previous weights with best_acc:',best_acc)
+    except:
+        print('did not find previous weights:',filename_checkpoint)
 
 
 model_train(model, X, y, X_test, y_test, best_acc, best_weights)
