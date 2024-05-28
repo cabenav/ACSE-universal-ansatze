@@ -7,13 +7,13 @@ import tqdm
 import torch
 
 ######################### config start ###############################
-hidden_size= 64 * 4 
+hidden_size= 64 * 8 
 num_hidden_layers=5
 LAYERS= [hidden_size for _ in range(num_hidden_layers+2)]
 LAYERS[0]=16
 LAYERS[-1]=6
 n_epochs = 25000 #250   # number of epochs to run
-batch_size = 64*4 * 4 #10  # size of each batch
+batch_size = 64*4 * 2 #10  # size of each batch
 #torch.set_printoptions(8)
 torch.set_printoptions(linewidth=140)
 #torch.set_default_dtype(torch.float64)
@@ -22,7 +22,7 @@ data_folder='data'
 title='m4'
 filename_prefix=f'{data_folder}/{title}'
 result_folder='checkpoints'
-note=f'test2-lr0.001-no-shuffle-f32-bs{batch_size}-layers{"_".join( str(_) for _ in LAYERS)}'
+note=f'test3-lr0.001-no-shuffle-f32-bs{batch_size}-layers{"_".join( str(_) for _ in LAYERS)}'
 filename_checkpoint=f'{result_folder}/{title}-{note}-check.pt'
 filename_loss=f'{result_folder}/{title}-{note}-loss.pt'
 print('title/note:',title,note)
@@ -52,6 +52,8 @@ def load(filename_prefix): #loadd all files with this filename prefix
         _data=np.load(filename)
         assert _data.shape[1] == 42
         data_list.append(_data)
+        #print(filename)
+        #break
     data = np.concatenate(data_list)
     return data
 
@@ -141,7 +143,7 @@ def model_train(model, X_train, y_train, X_val, y_val,best_acc=-np.inf,best_weig
                 training_loss_list.append( loss.detach().cpu().item() )
                 #print(acc)
                 bar.set_postfix(loss=float(loss), best_acc = float(best_acc),acc=float(acc))
-        print(','.join( [f'{_:.3f}\t' for _ in training_loss_list[-100:]]))
+        print('sample training loss:',','.join( [f'{_:.3f}\t' for _ in training_loss_list[-100:]]))
         training_loss = np.array(training_loss_list).mean()
         # evaluate accuracy at end of each epoch
         model.eval()
@@ -149,8 +151,9 @@ def model_train(model, X_train, y_train, X_val, y_val,best_acc=-np.inf,best_weig
         loss = loss_fn(y_pred,y_val)
         _loss = loss.detach().cpu().item() 
         loss_list.append( (_loss,training_loss) )
-        loss_np_array = np.array(loss_list[-10:])
-        print(loss_np_array)
+        loss_np_array = np.array(loss_list)
+        print('loss history: validation v.s. training')
+        print(loss_np_array[-10:])
         
         torch.save(loss_np_array,filename_loss)
         print(f'loss list saved into {filename_loss} at loss={loss_np_array[-1]}')
