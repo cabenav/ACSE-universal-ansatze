@@ -11,6 +11,14 @@ filename_loss=f'{result_folder}/{filename}'
 fig_folder='fig'
 filename_fig =f'{fig_folder}/{filename}.pdf'
 
+import sys
+#print ('argument list', sys.argv)
+try:
+    filename_loss = sys.argv[1]
+    print('get filename_loss:',filename_loss)
+except:
+    print('no imput loss file from cmd')
+
 # print local variables
 local=locals().copy()
 for k in local:
@@ -18,7 +26,7 @@ for k in local:
         print(f'{k}:\t{local[k]}')
 
 #print('input/output files:',filename_prefix,filename_checkpoint,filename_loss)
-
+exit()
 
 #folder='checkpoints'
 #filename_loss = '{folder}loss.pt'
