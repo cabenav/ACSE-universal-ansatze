@@ -112,4 +112,3 @@ plt.legend()
 plt.xlabel('Iteration')
 plt.ylabel('Energy')
 plt.show()
-
