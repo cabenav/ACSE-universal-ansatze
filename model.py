@@ -8,12 +8,12 @@ import torch
 
 ######################### config start ###############################
 
-output_width=10
+#output_width=10
 hidden_size= 64*8
 num_hidden_layers=5
 LAYERS= [hidden_size for _ in range(num_hidden_layers+2)]
 LAYERS[0]=16
-LAYERS[-1]=output_width
+LAYERS[-1]=6
 n_epochs = 25000 #250   # number of epochs to run
 batch_size = 64*4 * 4 #10  # size of each batch
 #torch.set_printoptions(8)
@@ -24,7 +24,7 @@ data_folder='data'
 title='m4'
 filename_prefix=f'{data_folder}/{title}'
 result_folder='checkpoints'
-note=f'float32-batchsize{batch_size}-layers{"_".join( str(_) for _ in LAYERS)}'
+note=f'shuffle-f32-bs{batch_size}-layers{"_".join( str(_) for _ in LAYERS)}'
 filename_checkpoint=f'{result_folder}/{title}-{note}-check.pt'
 filename_loss=f'{result_folder}/{title}-{note}-loss.pt'
 print('title/note:',title,note)
@@ -64,22 +64,25 @@ def load(filename_prefix): #loadd all files with this filename prefix
 print(f'loading data: {filename_prefix}')
 #d = torch.load(filename)
 #d = np.load(filename)
-d = load('data/m4')
-d=torch.tensor(d,device=device)
+#d = load('data/m4')
+d = load(filename_prefix)
+d = torch.tensor(d,device=device)
 print('sample entry d[0]')
 print(d[0])
 d=d.float()  #differ by 1e-9
 X = d[:,:16]
-y = d[:,-10:]
-print('data shape X Y',X.shape,y.shape)
-print(type(X),X.dtype)
+#y = d[:,-10:]
+y = d[:,-6:]
 
-#for evaluation
-X_test,y_test = X[:1000],y[:1000]
+# use the last 1000 for evaluation
+X_test,y_test = X[-1000:],y[-1000:] 
+X,y = X[:-1000],y[:-1000]
+
+print(type(X),X.dtype)
+print('data shape X Y',X.shape,y.shape)
 print('test shape X Y',X_test.shape,y_test.shape)
 
 #exit()
-
 class Deep(nn.Module):
     def __init__(self,layers=[28*28,640,640,60,10]):
         super().__init__()
@@ -190,11 +193,14 @@ def model_train(model, X_train, y_train, X_val, y_val,best_acc=-np.inf,best_weig
 layers=LAYERS    
 model = Deep(layers).to(device)
 print(model)
-
+print(f'batch_size={batch_size}')
 
 # Hold the best model
 best_acc = - np.inf   # init to negative infinity
 best_weights = None
+
+# load previous result for continuous training
+
 
 model_train(model, X, y, X_test, y_test, best_acc, best_weights)
 
