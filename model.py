@@ -7,13 +7,13 @@ import tqdm
 import torch
 
 ######################### config start ###############################
-hidden_size= 64 * 8 * 8
+hidden_size= 64 * 8 * 1
 num_hidden_layers=5
 LAYERS= [hidden_size for _ in range(num_hidden_layers+2)]
 LAYERS[0]=16
 LAYERS[-1]=6
 n_epochs = 25000 #250   # number of epochs to run
-batch_size = 64*4 * 2 * 8 #10  # size of each batch
+batch_size = 64*4 * 2 * 2 #10  # size of each batch
 #torch.set_printoptions(8)
 torch.set_printoptions(linewidth=140)
 #torch.set_default_dtype(torch.float64)
@@ -22,7 +22,7 @@ data_folder='data'
 title='m4'
 filename_prefix=f'{data_folder}/{title}'
 result_folder='checkpoints'
-note=f'test3-LeakyReLU-lr0.001-no-shuffle-f32-bs{batch_size}-layers{"_".join( str(_) for _ in LAYERS)}'
+note=f'test3-LeakyReLU-lr0.001-no-shuffle-f16-bs{batch_size}-layers{"_".join( str(_) for _ in LAYERS)}'
 filename_checkpoint=f'{result_folder}/{title}-{note}-check.pt'
 filename_loss=f'{result_folder}/{title}-{note}-loss.pt'
 print('title/note:',title,note)
@@ -61,11 +61,14 @@ def load(filename_prefix): #loadd all files with this filename prefix
 # load training data
 print(f'loading data: {filename_prefix}')
 d = load(filename_prefix)
-#d = d[:int(1e6)] # maximum 1 million data
+d = d[:int(1e6)] # maximum 1 million data
 d = torch.tensor(d,device=device)
 print('sample entry d[0]')
 print(d[0])
-d=d.float()  #differ by 1e-9
+
+torch.set_default_dtype(torch.float16)
+#d=d.float()  #differ by 1e-9
+d=d.half()  # half precision for fast training on large nn
 X = d[:,:16]
 #y = d[:,-10:]  #energy and parameters
 y = d[:,-6:]    #parameters
@@ -187,7 +190,8 @@ best_weights = None
 
 # loss function and optimizer
 loss_fn = nn.MSELoss()
-optimizer = optim.Adam(model.parameters(), lr=0.001)
+#optimizer = optim.Adam(model.parameters(), lr=0.001)
+optimizer = optim.SGD(model.parameters(), lr=0.1)
 
 # load previous result for continuous training
 if True:
