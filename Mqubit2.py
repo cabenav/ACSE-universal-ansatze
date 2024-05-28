@@ -96,7 +96,8 @@ for m in range(it):
 
 print("Exact Energies:", eigvalsh(Ham))
 print("Approx Energies:", eigvalsh(Ham))
-print("Hamiltonian parameters:", RR) 
+print("Hamiltonian parameters:", RR)
+print("Hamiltonian parameters:", np.reshape(RR, (2**M*2**M)) )
 print("'Ansatz' parameters:", F[0].real)
 
 
