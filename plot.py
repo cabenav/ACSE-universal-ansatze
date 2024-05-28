@@ -1,8 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-
-# config
+######################### config #######################3
 result_folder='checkpoints'
 filename='m4-float32-batchsize2048-layers16_512_512_512_512_512_10-loss.pt'
 filename='m4-float32-batchsize512-layers16_512_512_512_512_512_10-loss.pt'
@@ -22,24 +21,12 @@ except:
 # print local variables
 local=locals().copy()
 for k in local:
-    if k[0:2] != '__':
+    if k[0:2] != '__':      #skip built in module
         print(f'{k}:\t{local[k]}')
 
-#print('input/output files:',filename_prefix,filename_checkpoint,filename_loss)
-exit()
-
-#folder='checkpoints'
-#filename_loss = '{folder}loss.pt'
-#filename_fig = ''
-#print('input/output files:',filename,filename_checkpoint,filename_loss)
 
 import torch
-#loss_list
 loss_np_array = torch.load(filename_loss)
-#print(loss_list[:10])
-#a = torch.tensor(loss_list)
-#print(a[:10])
-
 
 data=loss_np_array
 print('sample of 10 data points')
