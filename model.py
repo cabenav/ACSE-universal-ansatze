@@ -9,7 +9,7 @@ import torch
 ######################### config start ###############################
 hidden_size= 64 * 1 * 1
 num_hidden_layers=8 # 5
-n_epochs = 50 #250   # number of epochs to run
+n_epochs = 250   # number of epochs to run
 batch_size = 16 * 2 * 1  #10  # size of each batch
 learning_rate=0.000001  #default 0.001
 #torch.set_printoptions(8)
@@ -20,7 +20,7 @@ data_folder='data'
 result_folder='checkpoints'
 title='m4'
 tag='v4'
-
+gpu=0
 
 exec(open('configurator.py').read()) # overrides from command line or config file
 ######################### config end   ###############################
@@ -34,16 +34,10 @@ filename_loss=f'{result_folder}/{title}-{note}-loss.pt'
 #print('title/note:',title,note)
 #print('input/output files:',filename_prefix,filename_checkpoint,filename_loss)
 
-
-
 config_keys = [k for k,v in globals().items() if not k.startswith('_') and isinstance(v, (int, float, bool, str))]
 config = {k: globals()[k] for k in config_keys} # will be useful for logging
 import json
 print(json.dumps(config, indent=2))
-exit()
-
-
-
 
 # Get cpu, gpu or mps device for training.
 device = (
@@ -55,7 +49,13 @@ device = (
 )
 # to choose gpu
 # CUDA_VISIBLE_DEVICES=1,2 python myscript.py
+# or use the following inside python
+if device == "cuda":
+    torch.cuda.set_device(gpu)
 print(f"Using {device} device")
+
+
+
 
 import os
 import glob
@@ -109,8 +109,8 @@ class Deep(nn.Module):
             layer0 = layers[i]
             layer1 = layers[i+1]
             layer = nn.Linear(layer0,layer1)
-            #act = nn.ReLU()
-            act = nn.LeakyReLU()
+            act = nn.ReLU()
+            #act = nn.LeakyReLU()
             modules.append(layer)
             modules.append(act)
         self.linear_relu_stack = nn.Sequential(*modules)
@@ -125,8 +125,6 @@ class Deep(nn.Module):
 def model_train(model, X_train, y_train, X_val, y_val,best_acc=-np.inf,best_weights = None):
     for i in [X_train, y_train, X_val, y_val]:
         print(i.shape)
-    loss_list=[]
-    
 
     batch_start = torch.arange(0, len(X_train), batch_size)
     for epoch in range(n_epochs):
@@ -209,22 +207,28 @@ loss_fn = nn.MSELoss()
 optimizer = optim.Adam(model.parameters(), lr=0.0001)
 #optimizer = optim.SGD(model.parameters(), lr=0.001)
 
+
+loss_list=[]
 # load previous result for continuous training
 if True:
     try:
         best_weights = torch.load(filename_checkpoint)
         model.load_state_dict(best_weights)
-        
+
+        loss_np_array = torch.load(filename_loss)
+        for i in range(loss_np_array.shape[0]):
+            loss_list.append(  (loss_np_array[i,0],loss_np_array[i,1])   )
+        #print(loss_list)
+        #exit()
         model.eval()
         y_pred = model(X_test)
         loss = loss_fn(y_pred,y_test)
         best_acc = - loss
-        print('loaded previous weights with best_acc:',best_acc)
+        print('loaded previous weights with best_acc:',best_acc,'loss_list length:',len(loss_list))
     except:
         print('did not find previous weights:',filename_checkpoint)
 
-
-print('finish test')
-exit()
 model_train(model, X, y, X_test, y_test, best_acc, best_weights)
 
+print(config)
+print('program finished')
