@@ -15,7 +15,10 @@ for f in filelist:
     t=os.path.getmtime(f)
     filename=f.split('/')[-1]
     filename_fig=f'{fig_folder}/{filename}.pdf'
-    t_fig = os.path.getmtime(filename_fig)
+    if os.path.exists(filename_fig):
+        t_fig = os.path.getmtime(filename_fig)
+    else:
+        t_fig = t-1 #plot for new data file
     if t > t_fig:
         print(f'data file updated for {filename_fig}. replotting...')
 #        continue
