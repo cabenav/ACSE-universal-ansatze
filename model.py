@@ -146,7 +146,7 @@ def model_train(model, X_train, y_train, X_val, y_val,best_acc=-np.inf,best_weig
                 training_loss_list.append( loss.detach().cpu().item() )
                 #print(acc)
                 bar.set_postfix(loss=float(loss), best_acc = float(best_acc),acc=float(acc))
-        print('sample training loss:',','.join( [f'{_:.3f}\t' for _ in training_loss_list[-100:]]))
+        print('sample training loss:','\t'.join( [f'{_:.3f}' for _ in training_loss_list[-100:]]))
         training_loss = np.array(training_loss_list).mean()
         # evaluate accuracy at end of each epoch
         model.eval()
@@ -155,18 +155,18 @@ def model_train(model, X_train, y_train, X_val, y_val,best_acc=-np.inf,best_weig
         _loss = loss.detach().cpu().item() 
         loss_list.append( (_loss,training_loss) )
         loss_np_array = np.array(loss_list)
-        print('loss history: validation v.s. training')
+        print('validation VS training | loss history')
         print(loss_np_array[-10:])
         
         torch.save(loss_np_array,filename_loss)
         print(f'loss list saved into {filename_loss} at loss={loss_np_array[-1]}')
         acc = - loss
 
-        print('target:')
+        print('target:     ',end='')
         print((y_val)[0])
-        print('prediction:')
+        print('prediction: ',end='')
         print(y_pred[0])
-        print('diff:')
+        print('diff:       ',end='')
         print((y_pred-y_val)[0])
 
         if acc > best_acc:
