@@ -7,13 +7,14 @@ import tqdm
 import torch
 
 ######################### config start ###############################
-hidden_size= 64 * 8 * 4
-num_hidden_layers=5
+hidden_size= 64 * 8 * 1
+num_hidden_layers=8 # 5
 LAYERS= [hidden_size for _ in range(num_hidden_layers+2)]
 LAYERS[0]=16
 LAYERS[-1]=6
-n_epochs = 25000 #250   # number of epochs to run
-batch_size = 64*4 * 1  #10  # size of each batch
+n_epochs = 2500 #250   # number of epochs to run
+batch_size = 64 * 1 * 1  #10  # size of each batch
+learning_rate=0.0001  #default 0.001
 #torch.set_printoptions(8)
 torch.set_printoptions(linewidth=140)
 #torch.set_default_dtype(torch.float64)
@@ -22,7 +23,7 @@ data_folder='data'
 title='m4'
 filename_prefix=f'{data_folder}/{title}'
 result_folder='checkpoints'
-note=f'v4-ReLU-Adam0.0001-shuffle-f32-bs{batch_size}-layers{"_".join( str(_) for _ in LAYERS)}'
+note=f'v4-ReLU-Adam{learning_rate}-bs{batch_size}-layers{"_".join( str(_) for _ in LAYERS)}'
 filename_checkpoint=f'{result_folder}/{title}-{note}-check.pt'
 filename_loss=f'{result_folder}/{title}-{note}-loss.pt'
 print('title/note:',title,note)
