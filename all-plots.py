@@ -10,6 +10,7 @@ import time
 #now = time.time()
 #delta = 600 # seconds
 plotted=[]
+skipped=[]
 for f in filelist:
     #print(f)
     t=os.path.getmtime(f)
@@ -21,11 +22,18 @@ for f in filelist:
         t_fig = t-1 #plot for new data file
     if t > t_fig:
         print(f'data file updated for {filename_fig}. replotting...')
-#        continue
-#    if False or (now - t) < delta:        
+        #        continue
+        #    if False or (now - t) < delta:        
         #print(t,f)
         os.system(f'make f={f} plot')
         plotted.append(f)
+    else:
+        print(f'skip {f}')
+        skipped.append(f)
 
+print('#'*120)
+print('skipped')
+print('\n'.join(skipped))
 print('finish plotting for:')
 print('\n'.join(plotted))
+print('#'*120)
