@@ -7,28 +7,43 @@ import tqdm
 import torch
 
 ######################### config start ###############################
-hidden_size= 64 * 8 * 1
+hidden_size= 64 * 1 * 1
 num_hidden_layers=8 # 5
-LAYERS= [hidden_size for _ in range(num_hidden_layers+2)]
-LAYERS[0]=16
-LAYERS[-1]=6
-n_epochs = 2500 #250   # number of epochs to run
-batch_size = 64 * 1 * 1  #10  # size of each batch
-learning_rate=0.0001  #default 0.001
+n_epochs = 50 #250   # number of epochs to run
+batch_size = 16 * 2 * 1  #10  # size of each batch
+learning_rate=0.000001  #default 0.001
 #torch.set_printoptions(8)
 torch.set_printoptions(linewidth=140)
 #torch.set_default_dtype(torch.float64)
 
 data_folder='data'
-title='m4'
-filename_prefix=f'{data_folder}/{title}'
 result_folder='checkpoints'
-note=f'v4-ReLU-Adam{learning_rate}-bs{batch_size}-layers{"_".join( str(_) for _ in LAYERS)}'
+title='m4'
+tag='v4'
+
+
+exec(open('configurator.py').read()) # overrides from command line or config file
+######################### config end   ###############################
+LAYERS= [hidden_size for _ in range(num_hidden_layers+2)]
+LAYERS[0]=16
+LAYERS[-1]=6
+note=f'{tag}-ReLU-Adam{learning_rate}-bs{batch_size}-layers{"_".join( str(_) for _ in LAYERS)}'
+filename_prefix=f'{data_folder}/{title}'  #for loading data
 filename_checkpoint=f'{result_folder}/{title}-{note}-check.pt'
 filename_loss=f'{result_folder}/{title}-{note}-loss.pt'
-print('title/note:',title,note)
-print('input/output files:',filename_prefix,filename_checkpoint,filename_loss)
-######################### config end   ###############################
+#print('title/note:',title,note)
+#print('input/output files:',filename_prefix,filename_checkpoint,filename_loss)
+
+
+
+config_keys = [k for k,v in globals().items() if not k.startswith('_') and isinstance(v, (int, float, bool, str))]
+config = {k: globals()[k] for k in config_keys} # will be useful for logging
+import json
+print(json.dumps(config, indent=2))
+exit()
+
+
+
 
 # Get cpu, gpu or mps device for training.
 device = (
@@ -200,7 +215,6 @@ if True:
         best_weights = torch.load(filename_checkpoint)
         model.load_state_dict(best_weights)
         
-        
         model.eval()
         y_pred = model(X_test)
         loss = loss_fn(y_pred,y_test)
@@ -210,5 +224,7 @@ if True:
         print('did not find previous weights:',filename_checkpoint)
 
 
+print('finish test')
+exit()
 model_train(model, X, y, X_test, y_test, best_acc, best_weights)
 
