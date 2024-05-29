@@ -5,6 +5,7 @@ import torch.nn as nn
 import torch.optim as optim
 import tqdm
 import torch
+from parallel import Parallel
 
 ######################### config start ###############################
 hidden_size= 64 * 1 * 1
@@ -102,22 +103,30 @@ print('test shape X Y',X_test.shape,y_test.shape)
 class Deep(nn.Module):
     def __init__(self,layers=[28*28,640,640,60,10]):
         super().__init__()
-        modules=[]
-        print('processing layers:',layers)
-        num_layers=len(layers)
-        for i in range(num_layers-2):
-            layer0 = layers[i]
-            layer1 = layers[i+1]
-            layer = nn.Linear(layer0,layer1)
-            act = nn.ReLU()
-            #act = nn.LeakyReLU()
-            modules.append(layer)
-            modules.append(act)
-        self.linear_relu_stack = nn.Sequential(*modules)
+        #
+        def get_modules():
+            modules=[]
+            print('processing layers:',layers)
+            num_layers=len(layers)
+            for i in range(num_layers-2):
+                layer0 = layers[i]
+                layer1 = layers[i+1]
+                layer = nn.Linear(layer0,layer1)
+                act = nn.ReLU()
+                #act = nn.LeakyReLU()
+                modules.append(layer)
+                modules.append(act)
+            return modules
+        #self.linear_relu_stack = nn.Sequential(*modules)
+        self.parallel=Parallel(
+            nn.Sequential(*get_modules()),
+            nn.Sequential(*get_modules()),
+            )
         self.output = nn.Linear(layers[-2], layers[-1])
         
     def forward(self, x):
-        x = self.linear_relu_stack(x)
+        #x = self.linear_relu_stack(x)
+        x = self.parallel(x)
         x = self.output(x)
         return x
 
