@@ -30,14 +30,17 @@ for k in local:
 import torch
 loss_np_array = torch.load(filename_loss)
 data=loss_np_array
-print('sample of 10 data points')
+print('data.shape',data.shape)
+print('sample of data points: first 10 and last 10')
 print(data[:10])
-print(data)
+print(data[-10:])
+#print(data)
 
 scale=1
-while len(data) > 2000:
+if False and len(data) > 2000:
     data = data[::10]
     scale = scale * 10
+    print('sparsify data to ',data.shape)
 
 # increase sigma you can get a more smoothed function.
 from scipy.ndimage import gaussian_filter1d
@@ -50,8 +53,7 @@ if data.shape[1] == 2:
     plt.plot(data, label=['validation loss','training loss'])
 else:
     plt.plot(data, label='validation loss')
-plt.ylim(0.008, 0.5)
-
+#plt.ylim(0.001, 0.9)
 plt.title(filename)
 plt.ylabel("Loss /log")
 plt.xlabel(f"Epoches x {scale}")
