@@ -96,6 +96,9 @@ def generate(index=0):
         for i in range(4):
             v[i] = expm(G) @ v[i]
             Ene[m + 1, i] = expectation_value(v[i], Ham)
+
+    #if TEST:
+        
     '''
     print(RR) 
     print(F.real[0])
@@ -107,12 +110,51 @@ def generate(index=0):
     print("'Ansatz' parameters:", F.real[0])
     print("'Ansatz' parameters:", F.real[1])
     '''
-    data=np.concatenate((
-        RR.flatten(),
-        Ham.flatten(),
-        Ene.real[1],
-        F.real[0],
-    ))
+    #print(v)
+    _data=[
+        Ham, # the constructed hamiltonian as input. probably need real and imaginary        
+        RR,  # the initial seed
+        Ene.real[2],   # the energy converges
+        Ene.imag[2],   # the energy converges
+        F.real,        # F goes to zero
+        F.imag,        # F goes to zero
+        v.real,             # v contains the para for ground state, as the output
+        v.imag,
+    ]
+    #print(_data)
+    _data2 = [ _.flatten() for _ in _data ]
+    data=np.concatenate( _data2 )
+
+    '''
+    lengths=[16,16,4*2,6*3*2,16*2]
+    keys=['Ham','RR','Ene','F','v']
+    indexes = lengths.copy()
+    indexes[0]=0
+    for i in range(1,len(lengths)):
+        indexes[i] = lengths[i-1] + indexes[i-1]    
+    #print(data)
+    
+    info = {}
+    info['total'] = indexes[-1]+lengths[-1]
+    indexes.append(info['total'])
+    for i in range(len(lengths)):
+        info[keys[i]] = (indexes[i],indexes[i+1])
+    print('lengths',lengths)
+    #print(indexes)
+    #print(keys)
+    print('index info:',info)
+    print('data.shape:',data.shape)
+    print('input: Ham')
+    print('output: v')
+    '''
+    
+    '''
+    lengths [16, 16, 8, 36, 32]
+    index info: {'total': 108, 'Ham': (0, 16), 'RR': (16, 32), 'Ene': (32, 40), 'F': (40, 76), 'v': (76, 108)}
+    data.shape: (108,)
+    '''    
+    #exit()
+    
     '''
     # data size
     print(
@@ -139,7 +181,7 @@ num_threads=16
 block_size = num_threads * 200
 folder='data'
 #filename_prefix=f'{folder}/m4'
-filename_prefix=f'{folder}/m5'
+filename_prefix=f'{folder}/m6'
 #filename='tmp.npy'
 # discontribute data into list of files with limited filesize or avoid slow I/O
 filesize_limit = 300 #50 # in Mb
@@ -167,11 +209,15 @@ def append(filename_prefix, array , filesize_limit = 100.0):
         return filename, data.shape
     #print(f'{trial}/{trials} data {data.shape} appended into {filename} {data_new.shape}')
 
+
+TEST=False
+    
 import sys
 from multiprocessing import Pool
 if __name__=="__main__":
-    #generate(0)
-    #exit()
+    if TEST:
+        generate(0)
+        exit()
 
     for trial in range(trials):
         with Pool(num_threads) as p:
