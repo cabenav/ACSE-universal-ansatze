@@ -138,10 +138,11 @@ num_threads=16
 # block to save data
 block_size = num_threads * 200
 folder='data'
-filename_prefix=f'{folder}/m4'
+#filename_prefix=f'{folder}/m4'
+filename_prefix=f'{folder}/m5'
 #filename='tmp.npy'
 # discontribute data into list of files with limited filesize or avoid slow I/O
-filesize_limit = 50 # in Mb
+filesize_limit = 300 #50 # in Mb
 filesize_limit_in_bytes = filesize_limit * 1.0e6 # in bytes
 ############################# config end  #################################
 
