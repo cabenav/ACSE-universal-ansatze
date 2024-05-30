@@ -10,7 +10,7 @@ from parallel import Parallel
 ######################### config start ###############################
 hidden_size= 64 * 1 * 1
 num_hidden_layers=8 # 5
-n_epochs = 250   # number of epochs to run
+n_epochs = 1000   # number of epochs to run
 batch_size = 16 * 2 * 1  #10  # size of each batch
 learning_rate=0.000001  #default 0.001
 #torch.set_printoptions(8)
@@ -20,14 +20,15 @@ torch.set_printoptions(linewidth=140)
 data_folder='data'
 result_folder='checkpoints'
 title='m4'
-tag='v4'
+title='m6'
+tag='v0'
 gpu=0
 
 exec(open('configurator.py').read()) # overrides from command line or config file
 ######################### config end   ###############################
 LAYERS= [hidden_size for _ in range(num_hidden_layers+2)]
 LAYERS[0]=16
-LAYERS[-1]=6
+LAYERS[-1]=16  # v (76, 108) from 76 to 92 for real part; imag is currently zero
 note=f'{tag}-ReLU-Adam{learning_rate}-bs{batch_size}-layers{"_".join( str(_) for _ in LAYERS)}'
 filename_prefix=f'{data_folder}/{title}'  #for loading data
 filename_checkpoint=f'{result_folder}/{title}-{note}-check.pt'
@@ -67,7 +68,7 @@ def load(filename_prefix): #loadd all files with this filename prefix
     data_list=[]
     for filename in filelist:
         _data=np.load(filename)
-        assert _data.shape[1] == 42
+        assert _data.shape[1] == 108  # 42
         data_list.append(_data)
         #print(filename)
         #break
@@ -88,7 +89,8 @@ d=d.float()  #differ by 1e-9
 #d=d.half()  # half precision for fast training on large nn
 X = d[:,:16]
 #y = d[:,-10:]  #energy and parameters
-y = d[:,-6:]    #parameters
+#y = d[:,-6:]    #parameters
+y = d[:,76:92]    #parameters
 
 # use the last 1000 for evaluation
 eval_size=d.shape[0]//5
