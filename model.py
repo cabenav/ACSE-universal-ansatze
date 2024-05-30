@@ -78,7 +78,7 @@ def load(filename_prefix): #loadd all files with this filename prefix
 # load training data
 print(f'loading data: {filename_prefix}')
 d = load(filename_prefix)
-d = d[:int(1e6)] # maximum 1 million data
+# d = d[:int(1e6)] # maximum 1 million data
 d = torch.tensor(d,device=device)
 print('sample entry d[0]')
 print(d[0])
@@ -91,7 +91,7 @@ X = d[:,:16]
 y = d[:,-6:]    #parameters
 
 # use the last 1000 for evaluation
-eval_size=d.shape[0]//20
+eval_size=d.shape[0]//5
 X_test,y_test = X[-eval_size:],y[-eval_size:] 
 X,y = X[:-eval_size],y[:-eval_size]
 
@@ -103,7 +103,6 @@ print('test shape X Y',X_test.shape,y_test.shape)
 class Deep(nn.Module):
     def __init__(self,layers=[28*28,640,640,60,10]):
         super().__init__()
-        #
         def get_modules():
             modules=[]
             print('processing layers:',layers)
@@ -116,17 +115,19 @@ class Deep(nn.Module):
                 #act = nn.LeakyReLU()
                 modules.append(layer)
                 modules.append(act)
+                #modules.append(nn.Dropout(p=0.2))
             return modules
+        self.linear_relu_stack = nn.Sequential(*get_modules())
         #self.linear_relu_stack = nn.Sequential(*modules)
-        self.parallel=Parallel(
-            nn.Sequential(*get_modules()),
-            nn.Sequential(*get_modules()),
-            )
+        #parallel doesn't improve with identical components, skip it
+        #self.parallel=Parallel(nn.Sequential(*get_modules()), nn.Sequential(*get_modules()),)
+        self.sigmoid = nn.Sigmoid()
         self.output = nn.Linear(layers[-2], layers[-1])
         
     def forward(self, x):
-        #x = self.linear_relu_stack(x)
-        x = self.parallel(x)
+        x = self.linear_relu_stack(x)
+        #x = self.parallel(x)
+        x = self.sigmoid(x)
         x = self.output(x)
         return x
 
