@@ -179,11 +179,11 @@ def model_train(model, X_train, y_train, X_val, y_val,best_acc=-np.inf,best_weig
         _loss = loss.detach().cpu().item() 
         loss_list.append( (_loss,training_loss) )
         loss_np_array = np.array(loss_list)
-        print('validation VS training | loss history')
+        print('  validation VS training | loss history')
         print(loss_np_array[-10:])
         
         torch.save(loss_np_array,filename_loss)
-        print(f'loss list saved into {filename_loss} at loss={loss_np_array[-1]}')
+        print(f'loss list saved into {filename_loss} {loss_np_array.shape} at loss={loss_np_array[-1]}')
         acc = - loss
 
         print('target:     ',end='')
@@ -197,9 +197,9 @@ def model_train(model, X_train, y_train, X_val, y_val,best_acc=-np.inf,best_weig
             best_acc = acc
             best_weights = copy.deepcopy(model.state_dict())
             #save into file
-            print('saving data')
+            #print('saving data')
             torch.save(best_weights,filename_checkpoint)
-            print(f'best weights saved into {filename_checkpoint} at epoch={epoch}, acc={acc}')            
+            print(f'best weights saved into {filename_checkpoint} at epoch={epoch}, acc={acc}, loss={loss}')            
     model.load_state_dict(best_weights)   # restore model and return best accuracy
     return best_acc,best_weights
 
