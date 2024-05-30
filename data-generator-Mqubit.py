@@ -174,11 +174,11 @@ def generate(index=0):
 
 
 ############################# config start #################################
-trials = 1000
+trials = 10000
 # scipy use defult omp threads=4 for each process. hence the actual cpu being used is num_threads * 4
 num_threads=16
 # block to save data
-block_size = num_threads * 200
+block_size = num_threads * 200 * 5
 folder='data'
 #filename_prefix=f'{folder}/m4'
 filename_prefix=f'{folder}/m6'
