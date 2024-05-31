@@ -107,61 +107,6 @@ print('test shape X Y',X_test.shape,y_test.shape)
 
 
 #########  accuracy: reconstruct energy ############
-'''
-def generate(index=0):
-
-    # Define Pauli matrices
-    I = np.eye(2, dtype=complex)
-    PauliMatrix = [
-        np.array([[1, 0], [0, 1]], dtype=complex),  # Pauli I
-        np.array([[0, 1], [1, 0]], dtype=complex),  # Pauli X
-        np.array([[0, -1j], [1j, 0]], dtype=complex),  # Pauli Y
-        np.array([[1, 0], [0, -1]], dtype=complex)  # Pauli Z
-    ]
-
-    # Define Ladder operators
-    Ladder = [
-        np.array([[1, 0], [0, 0]], dtype=complex),  # Ladder[1]
-        np.array([[0, 0], [0, 1]], dtype=complex)   # Ladder[2]
-    ]
-
-    # Initialize A array
-    A = np.zeros((6, 4, 4), dtype=complex)
-
-    # Populate A array aka the basis of the Lie algebra
-    A[0] = kron(1j * PauliMatrix[2], Ladder[0])
-    A[1] = kron(1j * PauliMatrix[2], Ladder[1])
-    A[2] = kron(Ladder[0], 1j * PauliMatrix[2])
-    A[3] = kron(Ladder[1], 1j * PauliMatrix[2])
-    A[4][1, 2] = 1
-    A[4][2, 1] = -1
-    A[5][0, 3] = 1
-    A[5][3, 0] = -1
-
-    # Initialize matrices and vectors
-    Ene = np.zeros((4, 4), dtype=complex)
-    v = np.zeros((4, 4), dtype=complex)
-    F = np.zeros((3, 6), dtype=complex)
-    #w = [0.4, 0.3, 0.2, 0.1]
-
-    v[0] = [1, 0, 0, 0]
-    v[1] = [0, 1, 0, 0]
-    v[2] = [0, 0, 1, 0]
-    v[3] = [0, 0, 0, 1]
-
-    def Be(a, b, c, d, e, f):
-        return a * A[0] + b * A[1] + c * A[2] + d * A[3] + e * A[4] + f * A[5]
-
-    # Initialize w
-    w = np.array([0.4, 0.3, 0.2, 0.1])
-
-    # Generate AllPauli array
-    AllPauli = np.zeros((4, 4, 4, 4), dtype=complex)
-    for i in range(4):
-        for j in range(4):
-            AllPauli[i, j] = kron(PauliMatrix[i], PauliMatrix[j])
-    Ham = np.zeros((4, 4), dtype=complex)
-'''
 def energy_flat(v_flat, Ham_flat):
     v = v_flat.reshape((4,4))
     Ham = Ham_flat.reshape((4,4,))
@@ -207,16 +152,7 @@ def get_acc(X_test,y_pred, Ene_test):
     #print(Ham_v.shape)
     Ene_pred =  torch.linalg.vecdot(v, Ham_v)
     
-    #check shape
-    #print(Ene_test.shape)
-    #print(Ene_pred.shape)
-    #print(Ene_pred[0:4])
-    #exit()
-    #done
-    
 
-    #for _ in [X_test,y_pred, Ene_test]:
-    #    print(type(_),_.shape)
     '''
     num = X_test.shape[0]
     Ene_pred = torch.zeros_like(Ene_test)
