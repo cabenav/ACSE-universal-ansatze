@@ -124,6 +124,7 @@ def get_acc(X_test,y_pred, Ene_test):
     ratio = (e1/e0).mean()
     acc = 1 - (1 - ratio).abs()
     acc = acc.detach().cpu().item()
+    acc = acc * 100 # percentage diff
     #print(e0[:10])
     #print(e1[:10])    
     #print(e0.shape,e1.shape,acc)
