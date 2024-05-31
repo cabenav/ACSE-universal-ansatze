@@ -97,10 +97,147 @@ eval_size=d.shape[0]//5
 X_test,y_test = X[-eval_size:],y[-eval_size:] 
 X,y = X[:-eval_size],y[:-eval_size]
 
+#Ene_test=d[-eval_size:,32:40] # to calculate accuracy
+Ene_test=d[-eval_size:,32:36] # to calculate accuracy # real part only
+#Ene_test = Ene_test.cpu()
+
 print(type(X),X.dtype)
 print('data shape X Y',X.shape,y.shape)
 print('test shape X Y',X_test.shape,y_test.shape)
 
+
+#########  accuracy: reconstruct energy ############
+'''
+def generate(index=0):
+
+    # Define Pauli matrices
+    I = np.eye(2, dtype=complex)
+    PauliMatrix = [
+        np.array([[1, 0], [0, 1]], dtype=complex),  # Pauli I
+        np.array([[0, 1], [1, 0]], dtype=complex),  # Pauli X
+        np.array([[0, -1j], [1j, 0]], dtype=complex),  # Pauli Y
+        np.array([[1, 0], [0, -1]], dtype=complex)  # Pauli Z
+    ]
+
+    # Define Ladder operators
+    Ladder = [
+        np.array([[1, 0], [0, 0]], dtype=complex),  # Ladder[1]
+        np.array([[0, 0], [0, 1]], dtype=complex)   # Ladder[2]
+    ]
+
+    # Initialize A array
+    A = np.zeros((6, 4, 4), dtype=complex)
+
+    # Populate A array aka the basis of the Lie algebra
+    A[0] = kron(1j * PauliMatrix[2], Ladder[0])
+    A[1] = kron(1j * PauliMatrix[2], Ladder[1])
+    A[2] = kron(Ladder[0], 1j * PauliMatrix[2])
+    A[3] = kron(Ladder[1], 1j * PauliMatrix[2])
+    A[4][1, 2] = 1
+    A[4][2, 1] = -1
+    A[5][0, 3] = 1
+    A[5][3, 0] = -1
+
+    # Initialize matrices and vectors
+    Ene = np.zeros((4, 4), dtype=complex)
+    v = np.zeros((4, 4), dtype=complex)
+    F = np.zeros((3, 6), dtype=complex)
+    #w = [0.4, 0.3, 0.2, 0.1]
+
+    v[0] = [1, 0, 0, 0]
+    v[1] = [0, 1, 0, 0]
+    v[2] = [0, 0, 1, 0]
+    v[3] = [0, 0, 0, 1]
+
+    def Be(a, b, c, d, e, f):
+        return a * A[0] + b * A[1] + c * A[2] + d * A[3] + e * A[4] + f * A[5]
+
+    # Initialize w
+    w = np.array([0.4, 0.3, 0.2, 0.1])
+
+    # Generate AllPauli array
+    AllPauli = np.zeros((4, 4, 4, 4), dtype=complex)
+    for i in range(4):
+        for j in range(4):
+            AllPauli[i, j] = kron(PauliMatrix[i], PauliMatrix[j])
+    Ham = np.zeros((4, 4), dtype=complex)
+'''
+def energy_flat(v_flat, Ham_flat):
+    v = v_flat.reshape((4,4))
+    Ham = Ham_flat.reshape((4,4,))
+    return energy(v,Ham)
+
+# Define helper functions
+def expectation_value(ve1, AA):
+    #print(AA)
+    #print(ve1)
+    #print(AA @ ve1)
+    #print(torch.einsum('ij,j->i',AA , ve1))
+    #input()
+    return torch.vdot(ve1, AA @ ve1)
+#return np.vdot(ve1, AA @ ve1)
+
+def energy(v,Ham):
+    #v=v.to(device)
+    Ene = torch.zeros(3)
+    for i in range(3):
+        Ene[i] = expectation_value(v[i], Ham)
+    #print(Ene)
+    #print(Ene.shape)
+    return Ene
+
+
+loss_acc = nn.MSELoss()
+def get_acc(X_test,y_pred, Ene_test):
+    #return torch.vdot(ve1, AA @ ve1)
+
+    # if v has only 3 rows
+    
+    num = X_test.shape[0]
+    v = X_test.reshape((num,4,4))
+    #v = v [:,0:2,:]
+    Ham = y_pred.reshape((num,4,4))
+    #Ene_pred =  torch.vdot(v, Ham @ v)
+    #print(Ham @ v )
+    #Ene_pred =  torch.linalg.vecdot(v, Ham @ v)
+
+    #print(torch.einsum('ij,j->i',AA , ve1))
+    Ham_v = torch.einsum('nij, nvj->nvi', Ham , v)  #Ham @ v
+    #print(v.shape)
+    #print(Ham_v.shape)
+    Ene_pred =  torch.linalg.vecdot(v, Ham_v)
+    
+    #check shape
+    #print(Ene_test.shape)
+    #print(Ene_pred.shape)
+    #print(Ene_pred[0:4])
+    #exit()
+    #done
+    
+
+    #for _ in [X_test,y_pred, Ene_test]:
+    #    print(type(_),_.shape)
+    '''
+    num = X_test.shape[0]
+    Ene_pred = torch.zeros_like(Ene_test)
+    print('updating acc')
+    for i in range(num):
+        #print(Ene_test[i])
+        Ene_pred[i,:3] = energy_flat(X_test[i], y_pred[i])
+        print(Ene_pred[i])
+        if i > 3:
+            exit()
+        #Ene = Ene_test[num]
+    print(Ene_pred.shape)
+    print('done')
+    '''
+    acc= - loss_acc(Ene_test,Ene_pred)
+    print('sample acc data on Ene: test | pred | diff. acc=',acc)
+    print(Ene_test[0])
+    print(Ene_pred[0])
+    print(Ene_test[0] - Ene_pred[0])
+    return acc
+        
 #exit()
 class Deep(nn.Module):
     def __init__(self,layers=[28*28,640,640,60,10]):
@@ -186,8 +323,10 @@ def model_train(model, X_train, y_train, X_val, y_val,best_acc=-np.inf,best_weig
         
         torch.save(loss_np_array,filename_loss)
         print(f'loss list saved into {filename_loss} {loss_np_array.shape} at loss={loss_np_array[-1]}')
-        acc = - loss
+        #acc = - loss
 
+        acc = get_acc(X_val, y_pred, Ene_test)
+            
         print('target:     ',end='')
         print((y_val)[0])
         print('prediction: ',end='')
