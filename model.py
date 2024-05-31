@@ -15,6 +15,7 @@ batch_size = 16 * 2 * 1  #10  # size of each batch
 learning_rate=0.000001  #default 0.001
 #torch.set_printoptions(8)
 torch.set_printoptions(linewidth=140)
+np.set_printoptions(linewidth=140)
 #torch.set_default_dtype(torch.float64)
 
 data_folder='data'
@@ -62,9 +63,9 @@ print(f"Using {device} device")
 import os
 import glob
 def load(filename_prefix): #loadd all files with this filename prefix
-    filelist = glob.glob(f'{filename_prefix}*.npy')
-    print(f'loading {len(filelist)} data files')
+    filelist = glob.glob(f'{filename_prefix}*.npy')    
     print('get file list',filelist)
+    print(f'loading {len(filelist)} data files...')
     data_list=[]
     for filename in filelist:
         _data=np.load(filename)
@@ -118,6 +119,17 @@ def get_acc(X_test,y_pred, Ene_test):
     Ham_v = torch.einsum('nij, nvj->nvi', Ham , v)  #Ham @ v
     Ene_pred =  torch.linalg.vecdot(v, Ham_v)
 
+    e0=Ene_test.sum(dim=1)
+    e1=Ene_pred.sum(dim=1)
+    ratio = (e1/e0).mean()
+    acc = 1 - (1 - ratio).abs()
+    acc = acc.detach().cpu().item()
+    #print(e0[:10])
+    #print(e1[:10])    
+    #print(e0.shape,e1.shape,acc)
+    #input()
+    return acc
+    '''
     acc= - loss_acc(Ene_test,Ene_pred)
     acc = acc.detach().cpu()
     print('sample acc data on Ene: test | pred | diff. acc=',acc)
@@ -125,7 +137,7 @@ def get_acc(X_test,y_pred, Ene_test):
     print(Ene_pred[0])
     print(Ene_test[0] - Ene_pred[0])
     return acc
-        
+    '''    
 #exit()
 class Deep(nn.Module):
     def __init__(self,layers=[28*28,640,640,60,10]):
@@ -162,7 +174,7 @@ class Deep(nn.Module):
 def model_train(model, X_train, y_train, X_val, y_val,best_acc=-np.inf,best_weights = None):
     for i in [X_train, y_train, X_val, y_val]:
         print(i.shape)
-
+    #acc = - np.inf
     batch_start = torch.arange(0, len(X_train), batch_size)
     for epoch in range(n_epochs):
         model.train()
@@ -200,15 +212,22 @@ def model_train(model, X_train, y_train, X_val, y_val,best_acc=-np.inf,best_weig
         model.eval()
         y_pred = model(X_val)
         loss = loss_fn(y_pred,y_val)
-        _loss = loss.detach().cpu().item() 
-        loss_list.append( (_loss,training_loss) )
+        _loss = loss.detach().cpu().item()
+        acc = get_acc(X_val, y_pred, Ene_test)
+        if acc > best_acc:
+            best_acc = acc
+            best_weights = copy.deepcopy(model.state_dict())
+            torch.save(best_weights,filename_checkpoint)
+            print(f'best weights saved into {filename_checkpoint} at epoch={epoch}, acc={acc}, loss={loss}')            
+        #print(loss_list)
+        loss_list.append( (_loss,training_loss, acc, best_acc, epoch) )
         loss_np_array = np.array(loss_list)
-        print('  validation VS training | loss history')
+        print('  | validation  |  training |    acc    | best_acc   |   epoch :  history')
         print(loss_np_array[-10:])
         
         torch.save(loss_np_array,filename_loss)
         print(f'loss list saved into {filename_loss} {loss_np_array.shape} at loss={loss_np_array[-1]}')
-        acc = get_acc(X_val, y_pred, Ene_test)
+        
             
         print('target:     ',end='')
         print((y_val)[0])
@@ -217,11 +236,7 @@ def model_train(model, X_train, y_train, X_val, y_val,best_acc=-np.inf,best_weig
         print('diff:       ',end='')
         print((y_pred-y_val)[0])
 
-        if acc > best_acc:
-            best_acc = acc
-            best_weights = copy.deepcopy(model.state_dict())
-            torch.save(best_weights,filename_checkpoint)
-            print(f'best weights saved into {filename_checkpoint} at epoch={epoch}, acc={acc}, loss={loss}')            
+
     model.load_state_dict(best_weights)   # restore model and return best accuracy
     return best_acc,best_weights
 
@@ -248,8 +263,9 @@ if True:
         model.load_state_dict(best_weights)
 
         loss_np_array = torch.load(filename_loss)
-        for i in range(loss_np_array.shape[0]):
-            loss_list.append(  (loss_np_array[i,0],loss_np_array[i,1])   )
+        loss_list = loss_np_array.to_list()
+        #for i in range(loss_np_array.shape[0]):
+        #    loss_list.append(  (loss_np_array[i,0],loss_np_array[i,1])   )
         model.eval()
         y_pred = model(X_test)
         loss = loss_fn(y_pred,y_test)
