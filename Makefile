@@ -7,7 +7,20 @@ py	=env/bin/python
 
 all:my-model
 my-model:
-	$(py) model.py --tag="v5" --batch_size=128 --num_hidden_layers=6 --gpu=0
+	$(py) model.py --tag="v8-err-sigmoid-1m" \
+--batch_size=64 \
+--num_hidden_layers=6 \
+--hidden_size=64  \
+--single_data_file=True \
+--learning_rate=0.00001 \
+--gpu=2
+
+#	$(py) model.py --tag="v6-dropout0.2-sigmoid" --batch_size=1024 --num_hidden_layers=6 --gpu=4
+#	$(py) model.py --tag="v5-parallel" --batch_size=128 --num_hidden_layers=6 --gpu=3
+
+# tune tip
+# no improvement from dropout, parallel(identical), sigmoid?
+# large batch_size=1024 seems to be fine
 
 data:
 	$(py) data-generator-Mqubit.py
