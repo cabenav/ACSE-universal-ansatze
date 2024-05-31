@@ -108,8 +108,8 @@ print('test shape X Y',X_test.shape,y_test.shape)
 
 
 ##  accuracy: reconstruct energy 
-loss_acc = nn.MSELoss()
-def get_acc(X_test,y_pred, Ene_test):
+#loss_acc = nn.MSELoss()
+def get_err(X_test,y_pred, Ene_test):
     #return torch.vdot(ve1, AA @ ve1)
     num = X_test.shape[0]
     v = X_test.reshape((num,4,4))
@@ -121,15 +121,17 @@ def get_acc(X_test,y_pred, Ene_test):
 
     e0=Ene_test.sum(dim=1)
     e1=Ene_pred.sum(dim=1)
-    ratio = (e1/e0).mean()
-    acc = 1 - (1 - ratio).abs()
-    acc = acc.detach().cpu().item()
-    acc = acc * 100 # percentage diff
+    err = ( (e1-e0)/e0 ).abs().mean()
+    #ratio = (e1/e0).mean()
+    #acc = 1 - (1 - ratio).abs()
+    err = err.detach().cpu().item()
+    #acc = acc.detach().cpu().item()
+    #acc = acc * 100 # percentage diff
     #print(e0[:10])
     #print(e1[:10])    
     #print(e0.shape,e1.shape,acc)
     #input()
-    return acc
+    return err
     '''
     acc= - loss_acc(Ene_test,Ene_pred)
     acc = acc.detach().cpu()
@@ -172,10 +174,9 @@ class Deep(nn.Module):
         return x
 
 
-def model_train(model, X_train, y_train, X_val, y_val,best_acc=-np.inf,best_weights = None):
+def model_train(model, X_train, y_train, X_val, y_val,best_err=np.inf,best_weights = None):
     for i in [X_train, y_train, X_val, y_val]:
         print(i.shape)
-    #acc = - np.inf
     batch_start = torch.arange(0, len(X_train), batch_size)
     for epoch in range(n_epochs):
         model.train()
@@ -214,16 +215,17 @@ def model_train(model, X_train, y_train, X_val, y_val,best_acc=-np.inf,best_weig
         y_pred = model(X_val)
         loss = loss_fn(y_pred,y_val)
         _loss = loss.detach().cpu().item()
-        acc = get_acc(X_val, y_pred, Ene_test)
-        if acc > best_acc:
-            best_acc = acc
+        err = get_err(X_val, y_pred, Ene_test)
+        if err <  best_err:
+            #best_acc = acc
+            best_err = err
             best_weights = copy.deepcopy(model.state_dict())
             torch.save(best_weights,filename_checkpoint)
-            print(f'best weights saved into {filename_checkpoint} at epoch={epoch}, acc={acc}, loss={loss}')            
+            print(f'best weights saved into {filename_checkpoint} at epoch={epoch}, err={err}, loss={loss}')            
         #print(loss_list)
-        loss_list.append( (_loss,training_loss, acc, best_acc, epoch) )
+        loss_list.append( (_loss,training_loss, err, best_err, epoch) )
         loss_np_array = np.array(loss_list)
-        print('  | validation  |  training |    acc    | best_acc   |   epoch :  history')
+        print('  | validation  |  training |    err    | best_err   |   epoch :  history')
         print(loss_np_array[-10:])
         
         torch.save(loss_np_array,filename_loss)
@@ -247,7 +249,7 @@ print(model)
 print(f'batch_size={batch_size}')
 
 # Hold the best model
-best_acc = - np.inf   # init to negative infinity
+best_err =  np.inf   # init to negative infinity
 best_weights = None
 
 # loss function and optimizer
@@ -270,12 +272,12 @@ if True:
         model.eval()
         y_pred = model(X_test)
         loss = loss_fn(y_pred,y_test)
-        best_acc = get_acc(X_test, y_pred, Ene_test)
-        print('loaded previous weights with best_acc:',best_acc,'loss_list length:',len(loss_list))
+        best_err = get_err(X_test, y_pred, Ene_test)
+        print('loaded previous weights with best_acc:',best_err,'loss_list length:',len(loss_list))
     except:
         print('did not find previous weights:',filename_checkpoint)
 
-model_train(model, X, y, X_test, y_test, best_acc, best_weights)
+model_train(model, X, y, X_test, y_test, best_err, best_weights)
 
 print(config)
 print('program finished')
