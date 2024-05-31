@@ -82,7 +82,7 @@ def load(filename_prefix): #loadd all files with this filename prefix
 # load training data
 print(f'loading data: {filename_prefix}')
 d = load(filename_prefix)
-d = d[:int(1e6)] # maximum 1 million data
+#d = d[:int(1e6)] # maximum 1 million data
 d = torch.tensor(d,device=device)
 print('sample entry d[0]')
 print(d[0])
@@ -165,13 +165,13 @@ class Deep(nn.Module):
         #self.linear_relu_stack = nn.Sequential(*modules)
         #parallel doesn't improve with identical components, skip it
         #self.parallel=Parallel(nn.Sequential(*get_modules()), nn.Sequential(*get_modules()),)
-        self.sigmoid = nn.Sigmoid()
+        #self.sigmoid = nn.Sigmoid()
         self.output = nn.Linear(layers[-2], layers[-1])
         
     def forward(self, x):
         x = self.linear_relu_stack(x)
         #x = self.parallel(x)
-        x = self.sigmoid(x)
+        #x = self.sigmoid(x)
         x = self.output(x)
         return x
 
