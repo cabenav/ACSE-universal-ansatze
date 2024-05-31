@@ -24,6 +24,7 @@ title='m4'
 title='m6'
 tag='v0'
 gpu=0
+single_data_file=False
 
 exec(open('configurator.py').read()) # overrides from command line or config file
 ######################### config end   ###############################
@@ -71,8 +72,9 @@ def load(filename_prefix): #loadd all files with this filename prefix
         _data=np.load(filename)
         assert _data.shape[1] == 108  # 42
         data_list.append(_data)
-        #print(filename)
-        #break
+        if single_data_file==True:
+            print('only processing',filename,'and skip other data files')
+            break
     data = np.concatenate(data_list)
     return data
 
