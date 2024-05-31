@@ -106,67 +106,18 @@ print('data shape X Y',X.shape,y.shape)
 print('test shape X Y',X_test.shape,y_test.shape)
 
 
-#########  accuracy: reconstruct energy ############
-def energy_flat(v_flat, Ham_flat):
-    v = v_flat.reshape((4,4))
-    Ham = Ham_flat.reshape((4,4,))
-    return energy(v,Ham)
-
-# Define helper functions
-def expectation_value(ve1, AA):
-    #print(AA)
-    #print(ve1)
-    #print(AA @ ve1)
-    #print(torch.einsum('ij,j->i',AA , ve1))
-    #input()
-    return torch.vdot(ve1, AA @ ve1)
-#return np.vdot(ve1, AA @ ve1)
-
-def energy(v,Ham):
-    #v=v.to(device)
-    Ene = torch.zeros(3)
-    for i in range(3):
-        Ene[i] = expectation_value(v[i], Ham)
-    #print(Ene)
-    #print(Ene.shape)
-    return Ene
-
-
+##  accuracy: reconstruct energy 
 loss_acc = nn.MSELoss()
 def get_acc(X_test,y_pred, Ene_test):
     #return torch.vdot(ve1, AA @ ve1)
-
-    # if v has only 3 rows
-    
     num = X_test.shape[0]
     v = X_test.reshape((num,4,4))
-    #v = v [:,0:2,:]
     Ham = y_pred.reshape((num,4,4))
+    #print(torch.einsum('ij,j->i',AA , ve1)) # original Ham @ v, not in tensor/in parallel
     #Ene_pred =  torch.vdot(v, Ham @ v)
-    #print(Ham @ v )
-    #Ene_pred =  torch.linalg.vecdot(v, Ham @ v)
-
-    #print(torch.einsum('ij,j->i',AA , ve1))
     Ham_v = torch.einsum('nij, nvj->nvi', Ham , v)  #Ham @ v
-    #print(v.shape)
-    #print(Ham_v.shape)
     Ene_pred =  torch.linalg.vecdot(v, Ham_v)
-    
 
-    '''
-    num = X_test.shape[0]
-    Ene_pred = torch.zeros_like(Ene_test)
-    print('updating acc')
-    for i in range(num):
-        #print(Ene_test[i])
-        Ene_pred[i,:3] = energy_flat(X_test[i], y_pred[i])
-        print(Ene_pred[i])
-        if i > 3:
-            exit()
-        #Ene = Ene_test[num]
-    print(Ene_pred.shape)
-    print('done')
-    '''
     acc= - loss_acc(Ene_test,Ene_pred)
     print('sample acc data on Ene: test | pred | diff. acc=',acc)
     print(Ene_test[0])
