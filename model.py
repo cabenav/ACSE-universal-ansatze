@@ -254,7 +254,7 @@ best_weights = None
 
 # loss function and optimizer
 loss_fn = nn.MSELoss()
-optimizer = optim.Adam(model.parameters(), lr=0.0001)
+optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 #optimizer = optim.SGD(model.parameters(), lr=0.001)
 
 
