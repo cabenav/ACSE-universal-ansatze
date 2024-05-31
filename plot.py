@@ -32,8 +32,8 @@ loss_np_array = torch.load(filename_loss)
 data=loss_np_array
 print('data.shape',data.shape)
 print('sample of data points: first 10 and last 10')
-print(data[:10])
-print(data[-10:])
+print(data[:5])
+print(data[-5:])
 #print(data)
 
 scale=1
@@ -43,14 +43,23 @@ if False and len(data) > 2000:
     print('sparsify data to ',data.shape)
 
 # increase sigma you can get a more smoothed function.
-from scipy.ndimage import gaussian_filter1d
+#from scipy.ndimage import gaussian_filter1d
 #data = gaussian_filter1d(data, sigma=2)
 
 plt.figure()
 print(data.shape)
 
+labels= ['validation loss','training loss','err','best err', 'epoch']
+
 if data.shape[1] == 2:
     plt.plot(data, label=['validation loss','training loss'])
+elif data.shape[1] == 5:
+    #print(data)
+    if True:
+        data[:,2:4] = data[:,2:4]/100
+        labels= ['validation loss','training loss','err/100','best err/100', 'epoch']
+    plt.plot(data[:,:4], label=labels[:4])
+    #plt.plot(data[:,:4], label=['validation loss','training loss','acc','best acc'])
 else:
     plt.plot(data, label='validation loss')
 #plt.ylim(0.001, 0.9)
