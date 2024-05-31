@@ -7,13 +7,14 @@ py	=env/bin/python
 
 all:my-model
 my-model:
-	$(py) model.py --tag="v8-err-sigmoid-1m" \
---batch_size=64 \
+	$(py) model.py \
+--tag="v0.1.0" \
+--batch_size=8064 \
 --num_hidden_layers=6 \
 --hidden_size=64  \
---single_data_file=True \
---learning_rate=0.00001 \
---gpu=2
+--single_data_file=False \
+--learning_rate=0.001 \
+--gpu=6
 
 #	$(py) model.py --tag="v6-dropout0.2-sigmoid" --batch_size=1024 --num_hidden_layers=6 --gpu=4
 #	$(py) model.py --tag="v5-parallel" --batch_size=128 --num_hidden_layers=6 --gpu=3
