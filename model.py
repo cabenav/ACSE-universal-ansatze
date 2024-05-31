@@ -38,7 +38,7 @@ filename_loss=f'{result_folder}/{title}-{note}-loss.pt'
 #print('title/note:',title,note)
 #print('input/output files:',filename_prefix,filename_checkpoint,filename_loss)
 
-config_keys = [k for k,v in globals().items() if not k.startswith('_') and isinstance(v, (int, float, bool, str))]
+config_keys = [k for k,v in globals().items() if not k.startswith('_') and isinstance(v, (int, float, bool, str)) and k not in ['arg','key','val','attempt']]
 config = {k: globals()[k] for k in config_keys} # will be useful for logging
 import json
 print(json.dumps(config, indent=2))
