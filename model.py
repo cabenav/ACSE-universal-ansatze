@@ -79,7 +79,7 @@ def load(filename_prefix): #loadd all files with this filename prefix
 # load training data
 print(f'loading data: {filename_prefix}')
 d = load(filename_prefix)
-# d = d[:int(1e6)] # maximum 1 million data
+d = d[:int(1e6)] # maximum 1 million data
 d = torch.tensor(d,device=device)
 print('sample entry d[0]')
 print(d[0])
@@ -119,6 +119,7 @@ def get_acc(X_test,y_pred, Ene_test):
     Ene_pred =  torch.linalg.vecdot(v, Ham_v)
 
     acc= - loss_acc(Ene_test,Ene_pred)
+    acc = acc.detach().cpu()
     print('sample acc data on Ene: test | pred | diff. acc=',acc)
     print(Ene_test[0])
     print(Ene_pred[0])
@@ -190,13 +191,10 @@ def model_train(model, X_train, y_train, X_val, y_val,best_acc=-np.inf,best_weig
                 loss.backward()
                 # update weights
                 optimizer.step()
-                # print progress                
-                #acc = acc_eval(y_pred,y_batch)
-                acc = - loss
                 training_loss_list.append( loss.detach().cpu().item() )
-                #print(acc)
-                bar.set_postfix(loss=float(loss), best_acc = float(best_acc),acc=float(acc))
-        print('sample training loss:','\t'.join( [f'{_:.3f}' for _ in training_loss_list[-100:]]))
+                bar.set_postfix(loss=float(loss))
+                #bar.set_postfix(loss=float(loss), best_acc = float(best_acc),acc=float(acc))
+        #print('sample training loss:','\t'.join( [f'{_:.3f}' for _ in training_loss_list[-100:]]))
         training_loss = np.array(training_loss_list).mean()
         # evaluate accuracy at end of each epoch
         model.eval()
@@ -210,8 +208,6 @@ def model_train(model, X_train, y_train, X_val, y_val,best_acc=-np.inf,best_weig
         
         torch.save(loss_np_array,filename_loss)
         print(f'loss list saved into {filename_loss} {loss_np_array.shape} at loss={loss_np_array[-1]}')
-        #acc = - loss
-
         acc = get_acc(X_val, y_pred, Ene_test)
             
         print('target:     ',end='')
@@ -224,8 +220,6 @@ def model_train(model, X_train, y_train, X_val, y_val,best_acc=-np.inf,best_weig
         if acc > best_acc:
             best_acc = acc
             best_weights = copy.deepcopy(model.state_dict())
-            #save into file
-            #print('saving data')
             torch.save(best_weights,filename_checkpoint)
             print(f'best weights saved into {filename_checkpoint} at epoch={epoch}, acc={acc}, loss={loss}')            
     model.load_state_dict(best_weights)   # restore model and return best accuracy
@@ -256,12 +250,10 @@ if True:
         loss_np_array = torch.load(filename_loss)
         for i in range(loss_np_array.shape[0]):
             loss_list.append(  (loss_np_array[i,0],loss_np_array[i,1])   )
-        #print(loss_list)
-        #exit()
         model.eval()
         y_pred = model(X_test)
         loss = loss_fn(y_pred,y_test)
-        best_acc = - loss
+        best_acc = get_acc(X_test, y_pred, Ene_test)
         print('loaded previous weights with best_acc:',best_acc,'loss_list length:',len(loss_list))
     except:
         print('did not find previous weights:',filename_checkpoint)
