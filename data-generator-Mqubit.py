@@ -4,8 +4,56 @@ from scipy.optimize import minimize
 import matplotlib.pyplot as plt
 import tqdm
 
-def generate(index=0):
 
+
+##  accuracy: reconstruct energy
+#loss_acc = nn.MSELoss()
+def get_err(X_test,y_pred, Ene_test):
+    #return torch.vdot(ve1, AA @ ve1)
+    num = X_test.shape[0]
+    Ham = X_test.reshape((num,4,4))
+    v = y_pred.reshape((num,4,4))
+    print('v   ',v)
+    # an average error of 0.1 in v wourld lead err=2 in Ene
+    delta=0.1 #1.79
+    print('delta:',delta)
+    v = v + delta
+    print('v + ',v)
+    #print(torch.einsum('ij,j->i',AA , ve1)) # original Ham @ v, not in tensor/in parallel
+    #Ene_pred =  torch.vdot(v, Ham @ v)
+    Ham_v = torch.einsum('nij, nvj->nvi', Ham , v)  #Ham @ v
+    Ene_pred =  torch.linalg.vecdot(v, Ham_v)
+
+    print(Ene_test[:10])
+    print(Ene_pred[:10])
+    e0=Ene_test.sum(dim=1)
+    e1=Ene_pred.sum(dim=1)
+    err = ( (e1-e0)/e0 ).abs().mean()
+    #ratio = (e1/e0).mean()
+    #acc = 1 - (1 - ratio).abs()
+    err = err.detach().cpu().item()
+    #acc = acc.detach().cpu().item()
+    #acc = acc * 100 # percentage diff
+    print(e0[:10])
+    print(e1[:10])
+    print(e0.shape,e1.shape,err)
+    #input()
+    return err
+
+# check if one can get the energy from v and Ham
+def verify_data(d):
+    print(d)
+    d = torch.tensor(d,device=device)
+    Ham = d[:,:16]      #Ham as X
+    v = d[:,76:92]    #v as y
+    Ene=d[:,32:36]    #Energy
+    err = get_err(Ham, v, Ene)
+    #err = get_err(X_val, y_pred, Ene_test)
+    print('err:',err)
+
+
+#generate one data entry as an 1D np array    
+def generate(index=0):
     # Define Pauli matrices
     I = np.eye(2, dtype=complex)
     PauliMatrix = [
@@ -97,20 +145,19 @@ def generate(index=0):
             v[i] = expm(G) @ v[i]
             Ene[m + 1, i] = expectation_value(v[i], Ham)
 
-    #if TEST:
-        
-    '''
-    print(RR) 
-    print(F.real[0])
-    print(F.real[1])
 
-    print("Eigenvalues:", eigvalsh(Ham))
+    
+    #print(RR) 
+    #print(F.real[0])
+    #print(F.real[1])
+
+    print("         Eigenvalues:", eigvalsh(Ham))
     print("Computed eigenvalues:", Ene.real[1])
     print("Hamiltonian parameters:", RR) 
     print("'Ansatz' parameters:", F.real[0])
     print("'Ansatz' parameters:", F.real[1])
-    '''
-    #print(v)
+    
+    print('v',v)
     _data=[
         Ham, # the constructed hamiltonian as input. probably need real and imaginary        
         RR,  # the initial seed
@@ -125,6 +172,7 @@ def generate(index=0):
     _data2 = [ _.flatten() for _ in _data ]
     data=np.concatenate( _data2 )
 
+    
     '''
     lengths=[16,16,4*2,6*3*2,16*2]
     keys=['Ham','RR','Ene','F','v']
@@ -210,13 +258,29 @@ def append(filename_prefix, array , filesize_limit = 100.0):
     #print(f'{trial}/{trials} data {data.shape} appended into {filename} {data_new.shape}')
 
 
-TEST=False
+TEST=True
     
 import sys
 from multiprocessing import Pool
 if __name__=="__main__":
     if TEST:
-        generate(0)
+        
+        import torch
+        device='cuda'
+        row = generate(0)
+        _data = torch.tensor(row)
+        data=torch.tensor(np.array([_data]))
+        data=data.to(device)
+        #verify_data(data)
+        #exit()
+        block_size=10000
+        with Pool(num_threads) as p:
+            result = list(tqdm.tqdm(p.imap(generate, range(block_size)), total=block_size))
+            #result = p.map(generate,list(range(block_size)))
+            data = np.array(result)
+        # program end without saving into file
+        verify_data(data)
+
         exit()
 
     for trial in range(trials):
