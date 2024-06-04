@@ -16,7 +16,7 @@ learning_rate=0.000001  #default 0.001
 #torch.set_printoptions(8)
 torch.set_printoptions(linewidth=140)
 np.set_printoptions(linewidth=140)
-#torch.set_default_dtype(torch.float64)
+torch.set_default_dtype(torch.half)
 
 data_folder='data'
 result_folder='checkpoints'
@@ -31,7 +31,7 @@ exec(open('configurator.py').read()) # overrides from command line or config fil
 LAYERS= [hidden_size for _ in range(num_hidden_layers+2)]
 LAYERS[0]=16
 LAYERS[-1]=16  # v (76, 108) from 76 to 92 for real part; imag is currently zero
-note=f'{tag}-ReLU-Adam{learning_rate}-bs{batch_size}-layers{"_".join( str(_) for _ in LAYERS)}'
+note=f'{tag}-ReLU-SGD{learning_rate}-bs{batch_size}-layers{"_".join( str(_) for _ in LAYERS)}'
 filename_prefix=f'{data_folder}/{title}'  #for loading data
 filename_checkpoint=f'{result_folder}/{title}-{note}-check.pt'
 filename_loss=f'{result_folder}/{title}-{note}-loss.pt'
@@ -69,21 +69,41 @@ def get_err(X_test,y_pred, Ene_test):
     v = y_pred.reshape((num,4,4))
     #print(torch.einsum('ij,j->i',AA , ve1)) # original Ham @ v, not in tensor/in parallel
     #Ene_pred =  torch.vdot(v, Ham @ v)
-    Ham_v = torch.einsum('nij, nvj->nvi', Ham , v)  #Ham @ v
-    Ene_pred =  torch.linalg.vecdot(v, Ham_v)
+    Ham_v = torch.einsum('nij, nvj->nvi', Ham , v)  #Ham @ v for n in parallel
+    Ene_pred =  torch.linalg.vecdot(v, Ham_v)       # vdot for n in parallel
 
     e0=Ene_test.sum(dim=1)
     e1=Ene_pred.sum(dim=1)
-    err = ( (e1-e0)/e0 ).abs().mean()
+    print( ( (e1-e0)/e0 )  )
+    print( ( (e1-e0)/e0 ).abs()  )
+    _ = (e1-e0)/e0
+
+    MAX=99.
+    for i in range(_.shape[0]):
+        item = _[i]
+        if item > MAX or item < -MAX:
+            print(i, item, MAX)
+    
+    _ = _.float().detach()
+    print(_)
+    print(_.max())
+    print(_.argmin())
+    i=54632
+    print(e0[i],e1[i],_[i])
+    
+    print('_',_.abs().mean())
+    print( ( (e1-e0)/e0 ).abs().mean()  )
+    #err = ( (e1-e0)/e0 ).abs().mean()
+    err = ( (e1-e0)).abs().mean()
     #ratio = (e1/e0).mean()
     #acc = 1 - (1 - ratio).abs()
     err = err.detach().cpu().item()
     #acc = acc.detach().cpu().item()
     #acc = acc * 100 # percentage diff
-    print(e0[:10])
-    print(e1[:10])    
+    print('e0',e0[:10])
+    print('e1',e1[:10])    
     print(e0.shape,e1.shape,err)
-    #input()
+    input()
     return err
 
 
@@ -114,7 +134,7 @@ def load(filename_prefix): #loadd all files with this filename prefix
             break
     data = np.concatenate(data_list)
 
-    if True:
+    if False:
         verify_data(data)
         exit()
     return data
@@ -128,9 +148,9 @@ d = torch.tensor(d,device=device)
 print('sample entry d[0]')
 print(d[0])
 
-#torch.set_default_dtype(torch.float16)
-d=d.float()  #differ by 1e-9
-#d=d.half()  # half precision for fast training on large nn
+torch.set_default_dtype(torch.float16)
+d=d.half()  # half precision for fast training on large nn
+#d=d.float()  #differ by 1e-9
 X = d[:,:16]
 #y = d[:,-10:]  #energy and parameters
 #y = d[:,-6:]    #parameters
@@ -251,7 +271,7 @@ def model_train(model, X_train, y_train, X_val, y_val,best_err=np.inf,best_weigh
 
 
     model.load_state_dict(best_weights)   # restore model and return best accuracy
-    return best_acc,best_weights
+    return best_err,best_weights
 
 
 model = Deep(LAYERS).to(device)
@@ -264,8 +284,8 @@ best_weights = None
 
 # loss function and optimizer
 loss_fn = nn.MSELoss()
-optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-#optimizer = optim.SGD(model.parameters(), lr=0.001)
+#optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+optimizer = optim.SGD(model.parameters(), lr=learning_rate)
 
 
 loss_list=[]
