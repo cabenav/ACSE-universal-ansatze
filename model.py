@@ -16,7 +16,7 @@ learning_rate=0.000001  #default 0.001
 #torch.set_printoptions(8)
 torch.set_printoptions(linewidth=140)
 np.set_printoptions(linewidth=140)
-torch.set_default_dtype(torch.half)
+#torch.set_default_dtype(torch.half)
 
 data_folder='data'
 result_folder='checkpoints'
@@ -61,7 +61,8 @@ print(f"Using {device} device")
 
 
 ##  accuracy: reconstruct energy 
-#loss_acc = nn.MSELoss()
+loss_err = nn.MSELoss()
+@torch.no_grad()
 def get_err(X_test,y_pred, Ene_test):
     #return torch.vdot(ve1, AA @ ve1)
     num = X_test.shape[0]
@@ -72,31 +73,22 @@ def get_err(X_test,y_pred, Ene_test):
     Ham_v = torch.einsum('nij, nvj->nvi', Ham , v)  #Ham @ v for n in parallel
     Ene_pred =  torch.linalg.vecdot(v, Ham_v)       # vdot for n in parallel
 
+    
     e0=Ene_test.sum(dim=1)
     e1=Ene_pred.sum(dim=1)
+    #err = loss_err(Ene_pred, Ene_test)
+    err = loss_err(e0,e1)
+    return err.detach().cpu()
+    
     print( ( (e1-e0)/e0 )  )
     print( ( (e1-e0)/e0 ).abs()  )
-    _ = (e1-e0)/e0
-
-    MAX=99.
-    for i in range(_.shape[0]):
-        item = _[i]
-        if item > MAX or item < -MAX:
-            print(i, item, MAX)
-    
-    _ = _.float().detach()
-    print(_)
-    print(_.max())
-    print(_.argmin())
-    i=54632
-    print(e0[i],e1[i],_[i])
-    
     print('_',_.abs().mean())
     print( ( (e1-e0)/e0 ).abs().mean()  )
     #err = ( (e1-e0)/e0 ).abs().mean()
     err = ( (e1-e0)).abs().mean()
     #ratio = (e1/e0).mean()
     #acc = 1 - (1 - ratio).abs()
+    
     err = err.detach().cpu().item()
     #acc = acc.detach().cpu().item()
     #acc = acc * 100 # percentage diff
@@ -148,9 +140,13 @@ d = torch.tensor(d,device=device)
 print('sample entry d[0]')
 print(d[0])
 
-torch.set_default_dtype(torch.float16)
-d=d.half()  # half precision for fast training on large nn
-#d=d.float()  #differ by 1e-9
+#torch.set_default_dtype(torch.float16)
+#d=d.half()  # half precision for fast training on large nn
+d=d.float()  #differ by 1e-9
+
+
+
+
 X = d[:,:16]
 #y = d[:,-10:]  #energy and parameters
 #y = d[:,-6:]    #parameters
@@ -242,16 +238,18 @@ def model_train(model, X_train, y_train, X_val, y_val,best_err=np.inf,best_weigh
         training_loss = np.array(training_loss_list).mean()
         # evaluate accuracy at end of each epoch
         model.eval()
-        y_pred = model(X_val)
-        loss = loss_fn(y_pred,y_val)
-        _loss = loss.detach().cpu().item()
-        err = get_err(X_val, y_pred, Ene_test)
-        if err <  best_err:
-            #best_acc = acc
-            best_err = err
-            best_weights = copy.deepcopy(model.state_dict())
-            torch.save(best_weights,filename_checkpoint)
-            print(f'best weights saved into {filename_checkpoint} at epoch={epoch}, err={err}, loss={loss}')            
+        # since the test size is large. use no_grad to save a lot of GPU memory
+        with torch.no_grad():
+            y_pred = model(X_val)
+            loss = loss_fn(y_pred,y_val)
+            _loss = loss.detach().cpu().item()
+            err = get_err(X_val, y_pred, Ene_test)
+            if err <  best_err:
+                #best_acc = acc
+                best_err = err
+                best_weights = copy.deepcopy(model.state_dict())
+                torch.save(best_weights,filename_checkpoint)
+                print(f'best weights saved into {filename_checkpoint} at epoch={epoch}, err={err}, loss={loss}')            
         #print(loss_list)
         loss_list.append( (_loss,training_loss, err, best_err, epoch) )
         loss_np_array = np.array(loss_list)
@@ -284,8 +282,8 @@ best_weights = None
 
 # loss function and optimizer
 loss_fn = nn.MSELoss()
-#optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-optimizer = optim.SGD(model.parameters(), lr=learning_rate)
+optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+#optimizer = optim.SGD(model.parameters(), lr=learning_rate)
 
 
 loss_list=[]
