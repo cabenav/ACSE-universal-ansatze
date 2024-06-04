@@ -59,7 +59,15 @@ if device == "cuda":
 print(f"Using {device} device")
 
 
-
+# check if one can get the energy from v and Ham
+def verify_data(d):
+    X = d[:,:16]      #Ham
+    y = d[:,76:92]    #v
+    Ene=d[:,32:36]    #Energy
+    err = get_err(Ham, v, Ene)
+    #err = get_err(X_val, y_pred, Ene_test)
+    print(err)
+    
 
 import os
 import glob
@@ -76,6 +84,10 @@ def load(filename_prefix): #loadd all files with this filename prefix
             print('only processing',filename,'and skip other data files')
             break
     data = np.concatenate(data_list)
+
+    if True:
+        verify_data(data)
+        exit()
     return data
 
 
