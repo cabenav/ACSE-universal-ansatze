@@ -59,10 +59,39 @@ if device == "cuda":
 print(f"Using {device} device")
 
 
+
+##  accuracy: reconstruct energy 
+#loss_acc = nn.MSELoss()
+def get_err(X_test,y_pred, Ene_test):
+    #return torch.vdot(ve1, AA @ ve1)
+    num = X_test.shape[0]
+    v = X_test.reshape((num,4,4))
+    Ham = y_pred.reshape((num,4,4))
+    #print(torch.einsum('ij,j->i',AA , ve1)) # original Ham @ v, not in tensor/in parallel
+    #Ene_pred =  torch.vdot(v, Ham @ v)
+    Ham_v = torch.einsum('nij, nvj->nvi', Ham , v)  #Ham @ v
+    Ene_pred =  torch.linalg.vecdot(v, Ham_v)
+
+    e0=Ene_test.sum(dim=1)
+    e1=Ene_pred.sum(dim=1)
+    err = ( (e1-e0)/e0 ).abs().mean()
+    #ratio = (e1/e0).mean()
+    #acc = 1 - (1 - ratio).abs()
+    err = err.detach().cpu().item()
+    #acc = acc.detach().cpu().item()
+    #acc = acc * 100 # percentage diff
+    print(e0[:10])
+    print(e1[:10])    
+    print(e0.shape,e1.shape,err)
+    #input()
+    return err
+
+
 # check if one can get the energy from v and Ham
 def verify_data(d):
-    X = d[:,:16]      #Ham
-    y = d[:,76:92]    #v
+    d = torch.tensor(d,device=device)
+    Ham = d[:,:16]      #Ham as X
+    v = d[:,76:92]    #v as y
     Ene=d[:,32:36]    #Energy
     err = get_err(Ham, v, Ene)
     #err = get_err(X_val, y_pred, Ene_test)
@@ -121,31 +150,6 @@ print('data shape X Y',X.shape,y.shape)
 print('test shape X Y',X_test.shape,y_test.shape)
 
 
-##  accuracy: reconstruct energy 
-#loss_acc = nn.MSELoss()
-def get_err(X_test,y_pred, Ene_test):
-    #return torch.vdot(ve1, AA @ ve1)
-    num = X_test.shape[0]
-    v = X_test.reshape((num,4,4))
-    Ham = y_pred.reshape((num,4,4))
-    #print(torch.einsum('ij,j->i',AA , ve1)) # original Ham @ v, not in tensor/in parallel
-    #Ene_pred =  torch.vdot(v, Ham @ v)
-    Ham_v = torch.einsum('nij, nvj->nvi', Ham , v)  #Ham @ v
-    Ene_pred =  torch.linalg.vecdot(v, Ham_v)
-
-    e0=Ene_test.sum(dim=1)
-    e1=Ene_pred.sum(dim=1)
-    err = ( (e1-e0)/e0 ).abs().mean()
-    #ratio = (e1/e0).mean()
-    #acc = 1 - (1 - ratio).abs()
-    err = err.detach().cpu().item()
-    #acc = acc.detach().cpu().item()
-    #acc = acc * 100 # percentage diff
-    #print(e0[:10])
-    #print(e1[:10])    
-    #print(e0.shape,e1.shape,acc)
-    #input()
-    return err
 
 #exit()
 class Deep(nn.Module):
