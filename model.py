@@ -146,15 +146,7 @@ def get_err(X_test,y_pred, Ene_test):
     #print(e0.shape,e1.shape,acc)
     #input()
     return err
-    '''
-    acc= - loss_acc(Ene_test,Ene_pred)
-    acc = acc.detach().cpu()
-    print('sample acc data on Ene: test | pred | diff. acc=',acc)
-    print(Ene_test[0])
-    print(Ene_pred[0])
-    print(Ene_test[0] - Ene_pred[0])
-    return acc
-    '''    
+
 #exit()
 class Deep(nn.Module):
     def __init__(self,layers=[28*28,640,640,60,10]):
