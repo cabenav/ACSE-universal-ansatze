@@ -16,7 +16,6 @@ learning_rate=0.000001  #default 0.001
 #torch.set_printoptions(8)
 torch.set_printoptions(linewidth=140)
 np.set_printoptions(linewidth=140)
-#torch.set_default_dtype(torch.half)
 
 data_folder='data'
 result_folder='checkpoints'
@@ -31,7 +30,7 @@ exec(open('configurator.py').read()) # overrides from command line or config fil
 LAYERS= [hidden_size for _ in range(num_hidden_layers+2)]
 LAYERS[0]=16
 LAYERS[-1]=16  # v (76, 108) from 76 to 92 for real part; imag is currently zero
-note=f'{tag}-ReLU-SGD{learning_rate}-bs{batch_size}-layers{"_".join( str(_) for _ in LAYERS)}'
+note=f'{tag}-ReLU-Adam{learning_rate}-bs{batch_size}-layers{"_".join( str(_) for _ in LAYERS)}'
 filename_prefix=f'{data_folder}/{title}'  #for loading data
 filename_checkpoint=f'{result_folder}/{title}-{note}-check.pt'
 filename_loss=f'{result_folder}/{title}-{note}-loss.pt'
@@ -72,32 +71,24 @@ def get_err(X_test,y_pred, Ene_test):
     #Ene_pred =  torch.vdot(v, Ham @ v)
     Ham_v = torch.einsum('nij, nvj->nvi', Ham , v)  #Ham @ v for n in parallel
     Ene_pred =  torch.linalg.vecdot(v, Ham_v)       # vdot for n in parallel
-
     
     e0=Ene_test.sum(dim=1)
     e1=Ene_pred.sum(dim=1)
     #err = loss_err(Ene_pred, Ene_test)
     err = loss_err(e0,e1)
     return err.detach().cpu()
-    
+'''
     print( ( (e1-e0)/e0 )  )
     print( ( (e1-e0)/e0 ).abs()  )
     print('_',_.abs().mean())
     print( ( (e1-e0)/e0 ).abs().mean()  )
-    #err = ( (e1-e0)/e0 ).abs().mean()
-    err = ( (e1-e0)).abs().mean()
-    #ratio = (e1/e0).mean()
-    #acc = 1 - (1 - ratio).abs()
-    
+    err = ( (e1-e0)/e0 ).abs().mean()
     err = err.detach().cpu().item()
-    #acc = acc.detach().cpu().item()
-    #acc = acc * 100 # percentage diff
     print('e0',e0[:10])
     print('e1',e1[:10])    
     print(e0.shape,e1.shape,err)
-    input()
     return err
-
+'''
 
 # check if one can get the energy from v and Ham
 def verify_data(d):
@@ -298,10 +289,11 @@ if True:
         #for i in range(loss_np_array.shape[0]):
         #    loss_list.append(  (loss_np_array[i,0],loss_np_array[i,1])   )
         model.eval()
-        y_pred = model(X_test)
-        loss = loss_fn(y_pred,y_test)
-        best_err = get_err(X_test, y_pred, Ene_test)
-        print('loaded previous weights with best_acc:',best_err,'loss_list length:',len(loss_list))
+        with torch.no_grad():
+            y_pred = model(X_test)
+            loss = loss_fn(y_pred,y_test)
+            best_err = get_err(X_test, y_pred, Ene_test)
+            print('loaded previous weights with best_acc:',best_err,'loss_list length:',len(loss_list))
     except:
         print('did not find previous weights:',filename_checkpoint)
 
