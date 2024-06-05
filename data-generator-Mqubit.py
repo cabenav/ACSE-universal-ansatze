@@ -112,7 +112,8 @@ def generate(index=0):
     # Generate random real numbers in the range [-2, 2] and Hamiltonian
     import time
     _seed = int((time.time()*1e7 % 1e9))
-    np.random.seed(_seed+index)
+    np.random.seed(_seed+index*100)  #ensure random seeds for each parallel process
+    #np.random.seed(index) #for test
     RR = np.random.uniform(-2, 2, (4, 4))
     Aux = AllPauli * RR[:, :, np.newaxis, np.newaxis]
     Ham = np.zeros((4, 4), dtype=complex)
@@ -229,12 +230,21 @@ num_threads=16
 block_size = num_threads * 200 * 5
 folder='data'
 #filename_prefix=f'{folder}/m4'
-filename_prefix=f'{folder}/m6'
+filename_prefix=f'{folder}/m7'
 #filename='tmp.npy'
 # discontribute data into list of files with limited filesize or avoid slow I/O
 filesize_limit = 300 #50 # in Mb
 filesize_limit_in_bytes = filesize_limit * 1.0e6 # in bytes
 ############################# config end  #################################
+# data history
+# m4: short version only contain RR and F
+# m6: long version contain RR, Ham, v, F, Ene
+# m7: same version with data verification
+
+# result of verification
+# (1) from v, one can construct Ene that matches eigen value of Ham
+# (2) 0.01 error in v yields 100% error in Ene
+# (3) RR give the same Ham, v and Ene everytime. This has been verified by fix random seeds
 
 print(f'This code generate data and saves into filename_prefix: {filename_prefix}-<index>.npy')
 print(f'filesize_limit: {filesize_limit} Mb')
@@ -267,7 +277,11 @@ if __name__=="__main__":
         
         import torch
         device='cuda'
-        row = generate(0)
+        row = generate(1)        
+        print('_'*80)
+        generate(1)
+        exit()
+        
         _data = torch.tensor(row)
         data=torch.tensor(np.array([_data]))
         data=data.to(device)
