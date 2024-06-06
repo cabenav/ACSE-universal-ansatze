@@ -46,7 +46,8 @@ if False and len(data) > 2000:
 #from scipy.ndimage import gaussian_filter1d
 #data = gaussian_filter1d(data, sigma=2)
 
-plt.figure()
+plt.figure(figsize=(9, 7))
+#figsize=(9, 11)
 print(data.shape)
 
 labels= ['validation loss','training loss','err','best err', 'epoch']
@@ -63,6 +64,7 @@ elif data.shape[1] == 5:
 else:
     plt.plot(data, label='validation loss')
 #plt.ylim(0.001, 0.9)
+#plt.tight_layout()
 plt.title(filename)
 plt.ylabel("Loss /log")
 plt.xlabel(f"Epoches x {scale}")
