@@ -151,6 +151,7 @@ X,y = X[:-eval_size],y[:-eval_size]
 #Ene_test=d[-eval_size:,32:40] # to calculate accuracy
 Ene_test=d[-eval_size:,32:36] # to calculate accuracy # real part only
 #Ene_test = Ene_test.cpu()
+Ene_abs_mean = Ene_test.sum(dim=1).abs().mean().item()
 
 print(type(X),X.dtype)
 print('data shape X Y',X.shape,y.shape)
@@ -167,15 +168,20 @@ class Deep(nn.Module):
             print('processing layers:',layers)
             num_layers=len(layers)
             for i in range(num_layers-2):
-                layer0 = layers[i]
-                layer1 = layers[i+1]
-                layer = nn.Linear(layer0,layer1)
-                bn=nn.BatchNorm1d(layer1,eps=1e-08)
-                act = nn.ReLU()
+                layer0,layer1 = layers[i:i+2]                
+                modules.append(nn.Linear(layer0,layer1))
+                modules.append(nn.BatchNorm1d(layer1,eps=1e-08))
+                modules.append(nn.ELU())
+                modules.append(nn.Dropout(p=0.2))
+                
+                #layer = nn.Linear(layer0,layer1)
+                #bn=nn.BatchNorm1d(layer1,eps=1e-08)
+                #act = nn.ReLU()
+                #act = nn.ELU()
                 #act = nn.LeakyReLU()
-                modules.append(layer)
-                modules.append(bn)
-                modules.append(act)
+                #modules.append(layer)
+                #modules.append(bn)
+                #modules.append(act)
                 #modules.append(nn.Dropout(p=0.2))
             return modules
         self.linear_relu_stack = nn.Sequential(*get_modules())
@@ -271,7 +277,7 @@ def model_train(model, X_train, y_train, X_val, y_val,best_err=np.inf,best_weigh
         print(loss_np_array[-10:])
         
         torch.save(loss_np_array,filename_loss)
-        print(f'loss list saved into {filename_loss} {loss_np_array.shape} at loss={loss_np_array[-1]}')
+        print(f'loss list saved into {filename_loss} {loss_np_array.shape} at loss={loss_np_array[-1]}, Ene_abs_mean={Ene_abs_mean}')
         
             
         print('target:     ',end='')
