@@ -14,8 +14,8 @@ n_epochs = 1000   # number of epochs to run
 batch_size = 16 * 2 * 1  #10  # size of each batch
 learning_rate=0.000001  #default 0.001
 #torch.set_printoptions(8)
-torch.set_printoptions(linewidth=140)
-np.set_printoptions(linewidth=140)
+torch.set_printoptions(linewidth=120)
+np.set_printoptions(linewidth=120)
 
 data_folder='data'
 result_folder='checkpoints'
@@ -170,9 +170,11 @@ class Deep(nn.Module):
                 layer0 = layers[i]
                 layer1 = layers[i+1]
                 layer = nn.Linear(layer0,layer1)
+                bn=nn.BatchNorm1d(layer1,eps=1e-08)
                 act = nn.ReLU()
                 #act = nn.LeakyReLU()
                 modules.append(layer)
+                modules.append(bn)
                 modules.append(act)
                 #modules.append(nn.Dropout(p=0.2))
             return modules
@@ -194,6 +196,7 @@ class Deep(nn.Module):
 def model_train(model, X_train, y_train, X_val, y_val,best_err=np.inf,best_weights = None):
     for i in [X_train, y_train, X_val, y_val]:
         print(i.shape)
+    val_split=False #split X_val during inference to save memory
     batch_start = torch.arange(0, len(X_train), batch_size)
     for epoch in range(n_epochs):
         model.train()
@@ -230,8 +233,28 @@ def model_train(model, X_train, y_train, X_val, y_val,best_err=np.inf,best_weigh
         # evaluate accuracy at end of each epoch
         model.eval()
         # since the test size is large. use no_grad to save a lot of GPU memory
+
         with torch.no_grad():
-            y_pred = model(X_val)
+
+            if not val_split:
+                try:
+                    y_pred = model(X_val)
+                except:
+                    print('run out of memory during validation.', 'X_val.shape', X_val.shape)            
+                    val_split = True
+                    val_batch_start = torch.arange(0, len(X_val), batch_size)
+            if val_split:                
+                ys=[]
+                with tqdm.tqdm(val_batch_start, unit="batch", mininterval=0, disable=False) as bar:
+                    bar.set_description(f"validating")
+                    for start in bar:
+                        X_batch = X_val[start:start+batch_size]
+                        #y_batch = y_val[start:start+batch_size]
+                        y_pred = model(X_batch)
+                        ys.append(y_pred)
+                        #bar.set_postfix(loss=float(loss))
+                y_pred = torch.cat(ys)                                    
+            #y_pred = model(X_val)
             loss = loss_fn(y_pred,y_val)
             _loss = loss.detach().cpu().item()
             err = get_err(X_val, y_pred, Ene_test)
