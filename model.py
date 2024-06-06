@@ -30,7 +30,7 @@ exec(open('configurator.py').read()) # overrides from command line or config fil
 LAYERS= [hidden_size for _ in range(num_hidden_layers+2)]
 LAYERS[0]=16
 LAYERS[-1]=16  # v (76, 108) from 76 to 92 for real part; imag is currently zero
-note=f'{tag}-ReLU-Adam{learning_rate}-bs{batch_size}-layers{"_".join( str(_) for _ in LAYERS)}'
+note=f'{tag}-Adam{learning_rate}-bs{batch_size}-layers{"_".join( str(_) for _ in LAYERS)}'
 filename_prefix=f'{data_folder}/{title}'  #for loading data
 filename_checkpoint=f'{result_folder}/{title}-{note}-check.pt'
 filename_loss=f'{result_folder}/{title}-{note}-loss.pt'
@@ -99,7 +99,7 @@ def verify_data(d):
     err = get_err(Ham, v, Ene)
     #err = get_err(X_val, y_pred, Ene_test)
     print(err)
-    
+
 
 import os
 import glob
@@ -170,9 +170,10 @@ class Deep(nn.Module):
             for i in range(num_layers-2):
                 layer0,layer1 = layers[i:i+2]                
                 modules.append(nn.Linear(layer0,layer1))
-                modules.append(nn.BatchNorm1d(layer1,eps=1e-08))
-                modules.append(nn.ELU())
-                modules.append(nn.Dropout(p=0.2))
+                #modules.append(nn.BatchNorm1d(layer1,eps=1e-08))
+                #modules.append(nn.ELU())
+                modules.append(nn.Tanh())
+                #modules.append(nn.Dropout(p=0.5))
                 
                 #layer = nn.Linear(layer0,layer1)
                 #bn=nn.BatchNorm1d(layer1,eps=1e-08)
@@ -273,7 +274,7 @@ def model_train(model, X_train, y_train, X_val, y_val,best_err=np.inf,best_weigh
         #print(loss_list)
         loss_list.append( (_loss,training_loss, err, best_err, epoch) )
         loss_np_array = np.array(loss_list)
-        print('  | validation  |  training |    err    | best_err   |   epoch :  history')
+        print('  |  validation  |  training  |    err     |   best_err   |   epoch   |  - history -')
         print(loss_np_array[-10:])
         
         torch.save(loss_np_array,filename_loss)
