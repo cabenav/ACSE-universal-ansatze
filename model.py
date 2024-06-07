@@ -157,7 +157,12 @@ print(type(X),X.dtype)
 print('data shape X Y',X.shape,y.shape)
 print('test shape X Y',X_test.shape,y_test.shape)
 
-
+class ResBlock(nn.Module):
+    def __init__(self, block):
+        super(ResBlock, self).__init__()
+        self.block = block
+    def forward(self, x):
+        return x + self.block(x)
 
 #exit()
 class Deep(nn.Module):
@@ -168,7 +173,7 @@ class Deep(nn.Module):
             print('processing layers:',layers)
             num_layers=len(layers)
             for i in range(num_layers-2):
-                layer0,layer1 = layers[i:i+2]                
+                layer0,layer1 = layers[i:i+2]                            
                 modules.append(nn.Linear(layer0,layer1))
                 #modules.append(nn.BatchNorm1d(layer1,eps=1e-08))
                 #modules.append(nn.ELU())
@@ -185,18 +190,56 @@ class Deep(nn.Module):
                 #modules.append(act)
                 #modules.append(nn.Dropout(p=0.2))
             return modules
-        self.linear_relu_stack = nn.Sequential(*get_modules())
+        #self.linear_relu_stack = nn.Sequential(*get_modules())
+
+        #rnn = nn.RNN(64,64,5)        
+        #self.l1=nn.Linear(layers[0],64)
+        #self.l2=rnn
+        #self.l3=nn.Linear(64,layers[-1])
+
+
+        #def residual
+
+        def get_blocks():
+            blocks=[]
+            blocks.append(nn.Linear(layers[0],layers[1]))
+            num_layers=len(layers)
+            # [2,8,8,8,2]
+            for i in range(1,num_layers-2):
+                _block=[]
+                layer0,layer1 = layers[i:i+2]
+                _block.append(nn.Tanh())
+                _block.append(nn.Linear(layer0,layer1))
+                block=ResBlock(nn.Sequential(*_block))
+                blocks.append(block)
+            blocks.append(nn.Tanh())
+            blocks.append(nn.Linear(layers[-2],layers[-1]))
+            #one can add extra linear layer to propogate the residual
+            return blocks
+        self.blocks= nn.Sequential(*get_blocks())
+
+        
         #self.linear_relu_stack = nn.Sequential(*modules)
         #parallel doesn't improve with identical components, skip it
         #self.parallel=Parallel(nn.Sequential(*get_modules()), nn.Sequential(*get_modules()),)
         #self.sigmoid = nn.Sigmoid()
-        self.output = nn.Linear(layers[-2], layers[-1])
+        #self.output = nn.Linear(layers[-2], layers[-1])
         
     def forward(self, x):
-        x = self.linear_relu_stack(x)
+
+        #print(x.shape)
+        x = self.blocks(x)
+        #print(x.shape)
+        #x=self.l1(x)
+        #x , hidden = self.l2(x,hidden)
+        #print(x)
+        #print(hidden)
+        #x = self.l3(x)        
+        #return x,hidden
+        #x = self.linear_relu_stack(x)
         #x = self.parallel(x)
         #x = self.sigmoid(x)
-        x = self.output(x)
+        #x = self.output(x)
         return x
 
 
