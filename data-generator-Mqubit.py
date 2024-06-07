@@ -148,17 +148,13 @@ def generate(index=0):
 
 
     
-    #print(RR) 
-    #print(F.real[0])
-    #print(F.real[1])
-
-    print("         Eigenvalues:", eigvalsh(Ham))
-    print("Computed eigenvalues:", Ene.real[1])
-    print("Hamiltonian parameters:", RR) 
-    print("'Ansatz' parameters:", F.real[0])
-    print("'Ansatz' parameters:", F.real[1])
+    #print("         Eigenvalues:", eigvalsh(Ham))
+    #print("Computed eigenvalues:", Ene.real[1])
+    #print("Hamiltonian parameters:", RR) 
+    #print("'Ansatz' parameters:", F.real[0])
+    #print("'Ansatz' parameters:", F.real[1])
     
-    print('v',v)
+    #print('v',v)
     _data=[
         Ham, # the constructed hamiltonian as input. probably need real and imaginary        
         RR,  # the initial seed
@@ -230,10 +226,10 @@ num_threads=16
 block_size = num_threads * 200 * 5
 folder='data'
 #filename_prefix=f'{folder}/m4'
-filename_prefix=f'{folder}/m7'
+filename_prefix=f'{folder}/m6'
 #filename='tmp.npy'
 # discontribute data into list of files with limited filesize or avoid slow I/O
-filesize_limit = 300 #50 # in Mb
+filesize_limit = 500 #50 # in Mb
 filesize_limit_in_bytes = filesize_limit * 1.0e6 # in bytes
 ############################# config end  #################################
 # data history
@@ -268,7 +264,7 @@ def append(filename_prefix, array , filesize_limit = 100.0):
     #print(f'{trial}/{trials} data {data.shape} appended into {filename} {data_new.shape}')
 
 
-TEST=True
+TEST=False
     
 import sys
 from multiprocessing import Pool
