@@ -104,11 +104,13 @@ def verify_data(d):
 import os
 import glob
 def load(filename_prefix): #loadd all files with this filename prefix
-    filelist = glob.glob(f'{filename_prefix}*.npy')    
-    print('get file list',filelist)
+    filelist = glob.glob(f'{filename_prefix}*.npy')
+    filelist.sort() #ensure the same validation data is used everytime    
+    print('get file list (max 80)',filelist)
     print(f'loading {len(filelist)} data files...')
     data_list=[]
     for filename in filelist:
+        print(filename)
         _data=np.load(filename)
         assert _data.shape[1] == 108  # 42
         data_list.append(_data)
@@ -127,13 +129,16 @@ def load(filename_prefix): #loadd all files with this filename prefix
 print(f'loading data: {filename_prefix}')
 d = load(filename_prefix)
 #d = d[:int(1e6)] # maximum 1 million data
-d = torch.tensor(d,device=device)
+#d = torch.tensor(d,device=device)
+d = torch.tensor(d)
+d=d.float()  #differ by 1e-9
+d=d.to(device)
 print('sample entry d[0]')
 print(d[0])
 
 #torch.set_default_dtype(torch.float16)
 #d=d.half()  # half precision for fast training on large nn
-d=d.float()  #differ by 1e-9
+
 
 
 
@@ -352,13 +357,13 @@ optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
 loss_list=[]
 # load previous result for continuous training
-if True:
-    try:
+if os.path.exists(filename_checkpoint):
         best_weights = torch.load(filename_checkpoint)
         model.load_state_dict(best_weights)
 
         loss_np_array = torch.load(filename_loss)
-        loss_list = loss_np_array.to_list()
+        loss_list = loss_np_array.tolist()
+        #print(loss_list)
         #for i in range(loss_np_array.shape[0]):
         #    loss_list.append(  (loss_np_array[i,0],loss_np_array[i,1])   )
         model.eval()
@@ -367,8 +372,8 @@ if True:
             loss = loss_fn(y_pred,y_test)
             best_err = get_err(X_test, y_pred, Ene_test)
             print('loaded previous weights with best_acc:',best_err,'loss_list length:',len(loss_list))
-    except:
-        print('did not find previous weights:',filename_checkpoint)
+else:
+    print('did not find previous weights:',filename_checkpoint)
 
 model_train(model, X, y, X_test, y_test, best_err, best_weights)
 
