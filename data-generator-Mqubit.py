@@ -1,3 +1,5 @@
+# modified from Mqubit.py
+
 import numpy as np
 from scipy.linalg import expm, kron, eigvalsh
 from scipy.optimize import minimize
@@ -6,8 +8,8 @@ import tqdm
 
 
 
-##  accuracy: reconstruct energy
-#loss_acc = nn.MSELoss()
+##  accuracy: reconstruct energy and calculate the absolute error
+# this function is used to verified data. not used in data generation
 def get_err(X_test,y_pred, Ene_test):
     #return torch.vdot(ve1, AA @ ve1)
     num = X_test.shape[0]
@@ -112,8 +114,11 @@ def generate(index=0):
     # Generate random real numbers in the range [-2, 2] and Hamiltonian
     import time
     _seed = int((time.time()*1e7 % 1e9))
-    np.random.seed(_seed+index*100)  #ensure random seeds for each parallel process
-    #np.random.seed(index) #for test
+    if TEST:
+        np.random.seed(index) #for test
+    else:
+        np.random.seed(_seed+index*100)  #ensure random seeds for each parallel process
+
     RR = np.random.uniform(-2, 2, (4, 4))
     Aux = AllPauli * RR[:, :, np.newaxis, np.newaxis]
     Ham = np.zeros((4, 4), dtype=complex)
@@ -169,6 +174,15 @@ def generate(index=0):
     _data2 = [ _.flatten() for _ in _data ]
     data=np.concatenate( _data2 )
 
+    '''
+    for mat of data
+    flatten matrices with lengths [16, 16, 8, 36, 32]
+    index info: {'total': 108, 'Ham': (0, 16), 'RR': (16, 32), 'Ene': (32, 40), 'F': (40, 76), 'v': (76, 108)}
+    data.shape: (108,)
+    model input: Ham
+    model output: v
+    '''    
+
     
     '''
     lengths=[16,16,4*2,6*3*2,16*2]
@@ -189,15 +203,12 @@ def generate(index=0):
     #print(keys)
     print('index info:',info)
     print('data.shape:',data.shape)
-    print('input: Ham')
-    print('output: v')
+    print('input: Ham',Ham)
+    print('output: v',v)
+    print('F',F)
     '''
     
-    '''
-    lengths [16, 16, 8, 36, 32]
-    index info: {'total': 108, 'Ham': (0, 16), 'RR': (16, 32), 'Ene': (32, 40), 'F': (40, 76), 'v': (76, 108)}
-    data.shape: (108,)
-    '''    
+
     #exit()
     
     '''
@@ -264,7 +275,7 @@ def append(filename_prefix, array , filesize_limit = 100.0):
     #print(f'{trial}/{trials} data {data.shape} appended into {filename} {data_new.shape}')
 
 
-TEST=False
+TEST=True
     
 import sys
 from multiprocessing import Pool
