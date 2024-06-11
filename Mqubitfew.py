@@ -20,7 +20,7 @@ PauliMatrix = [
 # Initialize matrices and vectors containing the relevant data
 Ene = np.zeros((it+1, 2**M), dtype=complex)
 v = np.zeros((2**M, 2**M), dtype=complex)
-A = np.zeros((it, 2**M*2**M), dtype=complex)
+F = np.zeros((it, 2**M*2**M), dtype=complex)
 
 # Initialize w
 w = np.zeros((2**M))
@@ -49,8 +49,8 @@ if M==2:
    for i in range(4):
       for j in range(4):
          AllPauli[i, j] = kron(PauliMatrix[i], PauliMatrix[j])
-   f = np.random.uniform(-4, 4, (4, 4))
-   Aux = AllPauli * f[:, :, np.newaxis, np.newaxis]
+   RR = np.random.uniform(-4, 4, (4, 4))
+   Aux = AllPauli * RR[:, :, np.newaxis, np.newaxis]
    Ham = sum(Aux[i,j] for i in range (4) for j in range(4))
 elif M ==3:
    AllPauli = np.zeros((4, 4, 4, 2**M, 2**M), dtype=complex)
@@ -58,8 +58,8 @@ elif M ==3:
       for j in range(4):
          for k in range(4):
             AllPauli[i, j, k] = kron(kron(PauliMatrix[i], PauliMatrix[j]), PauliMatrix[k])
-   f = np.random.uniform(-4, 4, (4, 4, 4))
-   Aux = AllPauli * f[:, :, :, np.newaxis, np.newaxis]
+   RR = np.random.uniform(-4, 4, (4, 4, 4))
+   Aux = AllPauli * RR[:, :, :, np.newaxis, np.newaxis]
    Ham = sum(Aux[i,j,k] for i in range (4) for j in range(4) for k in range(4))
 
 
@@ -76,16 +76,16 @@ for m in range(it):
           return sum(w[j] * expectation_value(expm(Be3(np.reshape(params1,(4,4,4)))) @ v[j], Ham) for j in range(2**M)).real   
     if M==2:
        res = minimize(fun_to_minimize, np.zeros(16))
-       A[m] = res.x
-       Aux2 = AllPauli * np.reshape(A[m],(4,4))[:, :, np.newaxis, np.newaxis]
+       F[m] = res.x
+       Aux2 = AllPauli * np.reshape(F[m],(4,4))[:, :, np.newaxis, np.newaxis]
        Antiunif = sum(Aux2[i, j]*1j for i in range (4) for j in range(4))
        for i in range(2**M):
           v[i] = expm(Antiunif) @ v[i]
           Ene[m + 1, i] = expectation_value(v[i], Ham)
     elif M==3:
        res = minimize(fun_to_minimize, np.zeros(64))
-       A[m] = res.x
-       Aux2 = AllPauli * np.reshape(A[m],(4,4,4))[:, :,:, np.newaxis, np.newaxis]
+       F[m] = res.x
+       Aux2 = AllPauli * np.reshape(F[m],(4,4,4))[:, :,:, np.newaxis, np.newaxis]
        Antiunif = sum(Aux2[i, j, k]*1j for i in range (4) for j in range(4) for k in range(4))
        for i in range(2**M):
           v[i] = expm(Antiunif) @ v[i]
@@ -96,9 +96,9 @@ for m in range(it):
 
 print("Exact Energies:", eigvalsh(Ham))
 print("Approx Energies:", Ene[1])
-print("ff:", np.reshape(f, (2**M*2**M)) )
-print("A[0]", A[0].real)
-print("'A[1]", A[1].real)
+print("Hamiltonian parameters:", RR)
+print("Hamiltonian parameters:", np.reshape(RR, (2**M*2**M)) )
+print("'Ansatz' parameters:", F[0].real)
 
 
 # Plot the results
