@@ -95,10 +95,10 @@ for m in range(it):
 # Printing the results
 
 print("Exact Energies:", eigvalsh(Ham))
-print("Approx Energies:", Ene[1])
-print("ff:", np.reshape(f, (2**M*2**M)) )
-print("A[0]", A[0].real)
-print("'A[1]", A[1].real)
+print("Approx Energies:", Ene[1].real)
+print("ff:", f)
+print("A[0] =", np.reshape(A[0],(4,4)))
+print("A[1] =", np.reshape(A[1].real,(4,4)))
 
 
 # Plot the results
