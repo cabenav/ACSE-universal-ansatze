@@ -67,7 +67,8 @@ else:
 #plt.tight_layout()
 plt.title(filename)
 plt.ylabel("Loss /log")
-plt.xlabel(f"Epoches x {scale}")
+#plt.xlabel(f"Epoches x {scale}")
+plt.xlabel(f"Epoches")
 plt.yscale('log')
 plt.legend(loc=0);
 plt.savefig(filename_fig)
