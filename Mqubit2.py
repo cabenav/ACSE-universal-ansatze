@@ -49,7 +49,7 @@ if M==2:
    for i in range(4):
       for j in range(4):
          AllPauli[i, j] = kron(PauliMatrix[i], PauliMatrix[j])
-   f = np.random.uniform(-10, 10, (4, 4))
+   f = np.random.uniform(-10, 10, (4, 4))   #This is the input: a 4x4 matrix
    Aux = AllPauli * f[:, :, np.newaxis, np.newaxis]
    Ham = sum(Aux[i,j] for i in range (4) for j in range(4))
 elif M ==3:
@@ -97,8 +97,8 @@ for m in range(it):
 print("Exact    Energies:", eigvalsh(Ham))
 print("Starting Energies:", Ene[0].real)
 print("Approx   Energies:", Ene[1].real)
-print("ff:", f)
-print("A[0] =", np.reshape(A[0].real,(4,4)))
+print("ff:", f) #This is the input
+print("A[0] =", np.reshape(A[0].real,(4,4))) #These are the output parameters
 print("A[1] =", np.reshape(A[1].real,(4,4)))
 
 
