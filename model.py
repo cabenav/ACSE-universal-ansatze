@@ -23,14 +23,15 @@ title='m4'
 title='m6'
 tag='v0'
 gpu=0
-single_data_file=False
+#single_data_file=False
+data_file_limit=-1
 
 exec(open('configurator.py').read()) # overrides from command line or config file
 ######################### config end   ###############################
 LAYERS= [hidden_size for _ in range(num_hidden_layers+2)]
 LAYERS[0]=16
 LAYERS[-1]=16  # v (76, 108) from 76 to 92 for real part; imag is currently zero
-note=f'{tag}-Adam{learning_rate}-bs{batch_size}-layers{"_".join( str(_) for _ in LAYERS)}'
+note=f'{tag}-ReL-Adam{learning_rate}-bs{batch_size}-layers{"_".join( str(_) for _ in LAYERS)}'
 filename_prefix=f'{data_folder}/{title}'  #for loading data
 filename_checkpoint=f'{result_folder}/{title}-{note}-check.pt'
 filename_loss=f'{result_folder}/{title}-{note}-loss.pt'
@@ -101,6 +102,12 @@ def verify_data(d):
     print(err)
 
 
+# return relative loss between two data sets
+eps=1e-5
+def get_reletive_loss(y0,y1):
+    r=(y1-y0).abs() / (y0.abs() + eps)    
+    return r.mean()
+    
 import os
 import glob
 def load(filename_prefix): #loadd all files with this filename prefix
@@ -110,7 +117,7 @@ def load(filename_prefix): #loadd all files with this filename prefix
     print(f'loading {len(filelist)} data files...')
     data_list=[]
     for filename in filelist:
-        print(filename)
+        print('loading...',filename)
         _data=np.load(filename)
         assert _data.shape[1] == 108  # 42
         data_list.append(_data)
@@ -273,8 +280,9 @@ def model_train(model, X_train, y_train, X_val, y_val,best_err=np.inf,best_weigh
                 # forward pass
                 y_pred = model(X_batch)
                 #print(y_pred.shape,y_batch.shape)
-                loss = loss_fn(y_pred, y_batch)
-                
+                #loss = loss_fn(y_pred, y_batch)
+                loss = get_reletive_loss(y_batch,y_pred)
+                    
                 # backward pass
                 optimizer.zero_grad()
                 loss.backward()
@@ -310,7 +318,8 @@ def model_train(model, X_train, y_train, X_val, y_val,best_err=np.inf,best_weigh
                         #bar.set_postfix(loss=float(loss))
                 y_pred = torch.cat(ys)                                    
             #y_pred = model(X_val)
-            loss = loss_fn(y_pred,y_val)
+            #loss = loss_fn(y_pred,y_val)
+            loss = get_reletive_loss(y_val,y_pred)
             _loss = loss.detach().cpu().item()
             err = get_err(X_val, y_pred, Ene_test)
             if err <  best_err:
@@ -369,7 +378,7 @@ if os.path.exists(filename_checkpoint):
         model.eval()
         with torch.no_grad():
             y_pred = model(X_test)
-            loss = loss_fn(y_pred,y_test)
+            #loss = loss_fn(y_pred,y_test)
             best_err = get_err(X_test, y_pred, Ene_test)
             print('loaded previous weights with best_acc:',best_err,'loss_list length:',len(loss_list))
 else:
