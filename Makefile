@@ -8,13 +8,13 @@ py	=env/bin/python
 all:my-model
 my-model:
 	$(py) model.py \
---tag="v0.1.0" \
---batch_size=8064 \
+--tag="v0.1.6-rnn" \
+--batch_size=4256 \
 --num_hidden_layers=6 \
---hidden_size=64  \
+--hidden_size=1024  \
 --single_data_file=False \
---learning_rate=0.001 \
---gpu=6
+--learning_rate=0.0001 \
+--gpu=0
 
 #	$(py) model.py --tag="v6-dropout0.2-sigmoid" --batch_size=1024 --num_hidden_layers=6 --gpu=4
 #	$(py) model.py --tag="v5-parallel" --batch_size=128 --num_hidden_layers=6 --gpu=3
@@ -41,6 +41,6 @@ rsync:
 	rsync -rP root@10.200.69.64:/root/weilei/ACSE-universal-ansatze/fig/ fig
 
 backup:
-	rsync -rP . ../backup/ACSE-universal-ansatze/20250528/ --exclude env --exclude .git
+	rsync -rP . ../backup/ACSE-universal-ansatze/20250613/ --exclude env --exclude .git --exclude data --exclude outdated
 test:
 	$(py) test.py
