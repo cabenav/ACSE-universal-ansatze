@@ -134,6 +134,8 @@ def load(filename_prefix): #loadd all files with this filename prefix
     return data
 
 
+
+
 # load training data
 print(f'loading data: {filename_prefix}')
 d = load(filename_prefix)
@@ -170,6 +172,32 @@ Ene_abs_mean = Ene_test.sum(dim=1).abs().mean().item()
 print(type(X),X.dtype)
 print('data shape X Y',X.shape,y.shape)
 print('test shape X Y',X_test.shape,y_test.shape)
+
+
+# rewrite data using DataLoader
+
+from torch.utils.data import Dataset,DataLoader
+class MyDataset(Dataset):
+    def __init__(self, X,y):
+        self.X=X
+        self.y=y
+        self.length=X.shape[0]
+
+    def __len__(self):
+        return self.length
+
+    def __getitem__(self, idx):
+        _X=self.X[idx]
+        _y=self.y[idx]
+        return _X,_y
+
+
+training_data=MyDataset(X,y)
+test_data=MyDataset(X_test,y_test)
+
+train_dataloader = DataLoader(training_data, batch_size=batch_size, shuffle=True)
+test_dataloader = DataLoader(test_data, batch_size=batch_size, shuffle=True)
+
 
 class ResBlock(nn.Module):
     def __init__(self, block):
@@ -274,8 +302,9 @@ def model_train(model, X_train, y_train, X_val, y_val,best_err=np.inf,best_weigh
             bar.set_description(f"Epoch {epoch}/{n_epochs}")            
             for start in bar:
                 # take a batch
-                X_batch = X_train[start:start+batch_size]
-                y_batch = y_train[start:start+batch_size]
+                X_batch,y_batch = next(iter(train_dataloader))
+                #X_batch = X_train[start:start+batch_size]
+                #y_batch = y_train[start:start+batch_size]
                 #X_batch,y_batch = X_batch.to(device),y_batch.to(device)
                 #print('X_batch.shape',X_batch.shape)
                 
