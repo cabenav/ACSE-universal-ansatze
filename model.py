@@ -173,7 +173,9 @@ print(type(X),X.dtype)
 print('data shape X Y',X.shape,y.shape)
 print('test shape X Y',X_test.shape,y_test.shape)
 
-
+#X_test = X_test.to(device)
+#y_test = y_test.to(device)
+#Ene_test=Ene_test.to(device)
 # rewrite data using DataLoader
 
 from torch.utils.data import Dataset,DataLoader
@@ -191,12 +193,12 @@ class MyDataset(Dataset):
         _y=self.y[idx]
         return _X,_y
 
+torch.multiprocessing.set_start_method('spawn')
 
-training_data=MyDataset(X,y)
-test_data=MyDataset(X_test,y_test)
-
-train_dataloader = DataLoader(training_data, batch_size=batch_size, shuffle=True)
-test_dataloader = DataLoader(test_data, batch_size=batch_size, shuffle=True)
+#training_data=MyDataset(X,y)
+#test_data=MyDataset(X_test,y_test)
+#train_dataloader = DataLoader(training_data, batch_size=batch_size, shuffle=True,num_workers=0)
+#test_dataloader = DataLoader(test_data, batch_size=batch_size, shuffle=True)
 
 
 class ResBlock(nn.Module):
@@ -302,9 +304,9 @@ def model_train(model, X_train, y_train, X_val, y_val,best_err=np.inf,best_weigh
             bar.set_description(f"Epoch {epoch}/{n_epochs}")            
             for start in bar:
                 # take a batch
-                X_batch,y_batch = next(iter(train_dataloader))
-                #X_batch = X_train[start:start+batch_size]
-                #y_batch = y_train[start:start+batch_size]
+                #X_batch,y_batch = next(iter(train_dataloader)) #dataloader is slower in our case when all data can be saved in GPU
+                X_batch = X_train[start:start+batch_size]
+                y_batch = y_train[start:start+batch_size]
                 #X_batch,y_batch = X_batch.to(device),y_batch.to(device)
                 #print('X_batch.shape',X_batch.shape)
                 
@@ -408,10 +410,11 @@ if os.path.exists(filename_checkpoint):
         #    loss_list.append(  (loss_np_array[i,0],loss_np_array[i,1])   )
         model.eval()
         with torch.no_grad():
-            y_pred = model(X_test)
+            y_pred = model(X_test[:batch_size])
             #loss = loss_fn(y_pred,y_test)
-            best_err = get_err(X_test, y_pred, Ene_test)
+            best_err = get_err(X_test[:batch_size], y_pred, Ene_test[:batch_size])
             print('loaded previous weights with best_acc:',best_err,'loss_list length:',len(loss_list))
+            # an estimate on best acc, in fact one can read from data file. best_err = loss_np_array[-1,4]
 else:
     print('did not find previous weights:',filename_checkpoint)
 
