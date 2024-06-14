@@ -10,7 +10,7 @@ from parallel import Parallel
 ######################### config start ###############################
 hidden_size= 64 * 1 * 1
 num_hidden_layers=8 # 5
-n_epochs = 1000   # number of epochs to run
+n_epochs = 10000   # number of epochs to run
 batch_size = 16 * 2 * 1  #10  # size of each batch
 learning_rate=0.000001  #default 0.001
 #torch.set_printoptions(8)
@@ -112,7 +112,9 @@ import os
 import glob
 def load(filename_prefix): #loadd all files with this filename prefix
     filelist = glob.glob(f'{filename_prefix}*.npy')
-    filelist.sort() #ensure the same validation data is used everytime    
+    filelist.sort() #ensure the same validation data is used everytime
+    if data_file_limit > 0 :
+        filelist = filelist[:data_file_limit]
     print('get file list (max 80)',filelist)
     print(f'loading {len(filelist)} data files...')
     data_list=[]
@@ -121,9 +123,9 @@ def load(filename_prefix): #loadd all files with this filename prefix
         _data=np.load(filename)
         assert _data.shape[1] == 108  # 42
         data_list.append(_data)
-        if single_data_file==True:
-            print('only processing',filename,'and skip other data files')
-            break
+        #if single_data_file==True:
+        #print('only processing',filename,'and skip other data files')
+        #break
     data = np.concatenate(data_list)
 
     if False:
