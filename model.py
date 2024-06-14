@@ -173,6 +173,8 @@ print(type(X),X.dtype)
 print('data shape X Y',X.shape,y.shape)
 print('test shape X Y',X_test.shape,y_test.shape)
 
+del d # to save some memory
+
 #X_test = X_test.to(device)
 #y_test = y_test.to(device)
 #Ene_test=Ene_test.to(device)
@@ -336,7 +338,7 @@ def model_train(model, X_train, y_train, X_val, y_val,best_err=np.inf,best_weigh
                 try:
                     y_pred = model(X_val)
                 except:
-                    print('run out of memory during validation.', 'X_val.shape', X_val.shape)            
+                    print('run out of memory during validation.', 'X_val.shape', X_val.shape, 'run validation in split instead')            
                     val_split = True
                     val_batch_start = torch.arange(0, len(X_val), batch_size)
             if val_split:                
