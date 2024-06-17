@@ -11,23 +11,39 @@ import tqdm
 
 
 
-##  accuracy: reconstruct energy and calculate the absolute error
-# this function is used to verified data. not used in data generation
-def get_err(X_test,y_pred, Ene_test):
-    #return torch.vdot(ve1, AA @ ve1)
-    num = X_test.shape[0]
-    Ham = X_test.reshape((num,4,4))
-    v = y_pred.reshape((num,4,4))
-    print('v   ',v)
-    # an average error of 0.1 in v wourld lead err=2 in Ene
-    delta=0.1 #1.79
-    print('delta:',delta)
-    v = v + delta
-    print('v + ',v)
+
+def v2Ene(Ham,v):
     #print(torch.einsum('ij,j->i',AA , ve1)) # original Ham @ v, not in tensor/in parallel
     #Ene_pred =  torch.vdot(v, Ham @ v)
     Ham_v = torch.einsum('nij, nvj->nvi', Ham , v)  #Ham @ v
     Ene_pred =  torch.linalg.vecdot(v, Ham_v)
+    return Ene_pred
+
+def flat_v2Ene(Ham_flat,v_flat):    
+    num = v_flat.shape[0]
+    Ham = Ham_flat.reshape((num,4,4))
+    v = v_flat.reshape((num,4,4))
+    return v2Ene(Ham,v)
+    
+##  accuracy: reconstruct energy and calculate the absolute error
+# this function is used to verified data. not used in data generation
+def get_err(X_test,y_pred, Ene_test):
+    #return torch.vdot(ve1, AA @ ve1)
+    Ene_pred = flat_v2Ene(Ham_flat = X_test,v_flat=y_pred)
+    #Ene_pred = v2Ene(v,Ham)
+    
+    #num = X_test.shape[0]
+    #Ham = X_test.reshape((num,4,4))
+    #v = y_pred.reshape((num,4,4))
+
+    #print('v   ',v)    
+    # an average error of 0.1 in v wourld lead err=2 in Ene
+    #delta=1.02 #0.1 #1.79
+    #print('delta:',delta)
+    #v = v + delta
+    #v = v * delta
+    #print('v * ',v)
+    
 
     print(Ene_test[:10])
     print(Ene_pred[:10])
@@ -297,7 +313,15 @@ if __name__=="__main__":
         _data = torch.tensor(row)
         data=torch.tensor(np.array([_data]))
         data=data.to(device)
-        verify_data(data)
+        #verify_data(data)
+
+        d=data
+        X = d[:,:16]
+        y = d[:,76:92]    #parameters
+        Ene_test=d[:,32:36]
+        #def get_err(X_test,y_pred, Ene_test):
+        print('_'*80)
+        get_err(X,y, Ene_test)
         exit()
         block_size=10000
         with Pool(num_threads) as p:
