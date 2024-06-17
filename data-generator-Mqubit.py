@@ -116,8 +116,14 @@ def get_v0():
 #def get_err_F(X_test,y_pred, Ene_test):
 def get_err_F(Ham,F, Ene_test):
     # test for single entry
-    Ham = Ham[0]
+    Ham_flat = Ham[0]
     F=F[0]
+
+    #num = Ham_flat.shape[0]
+    #Ham = Ham_flat.reshape((num,4,4))
+    Ham = Ham_flat.reshape((4,4))
+    #v = v_flat.reshape((num,4,4))
+    
     print('Ham',Ham)
     print('F',F)
 
@@ -179,13 +185,22 @@ def get_err_F(Ham,F, Ene_test):
     #print(_)
     G = sum(F[i].cpu() * A[i] for i in range(6))
     print('now got G',G)
-    return
+    #return
     m=0
     for i in range(4):
             v[i] = expm(G) @ v[i]
+            print(v[i])
+            print(Ham)
+                  
             Ene[m + 1, i] = expectation_value(v[i], Ham.cpu())
-    print(Ene)    
+    print(Ene)
+    print(Ene_test)
     return
+
+
+
+
+
     # Perform the optimization loop
     for m in range(3):
         def fun_to_minimize(params):
