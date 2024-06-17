@@ -1,3 +1,6 @@
+'''Construct Hamiltonian with random parameters, evaluate ansatz parameter and the ground state energy
+   Parallel computing on CPU nodes, data saved in .npy format (readable by Numpy or Torch)
+'''
 # modified from Mqubit.py
 
 import numpy as np
@@ -45,7 +48,9 @@ def get_err(X_test,y_pred, Ene_test):
 # check if one can get the energy from v and Ham
 def verify_data(d):
     print(d)
-    d = torch.tensor(d,device=device)
+    d = d.clone().detach()
+    d.to(device)
+    #d = torch.tensor(d,device=device)
     Ham = d[:,:16]      #Ham as X
     v = d[:,76:92]    #v as y
     Ene=d[:,32:36]    #Energy
@@ -184,7 +189,7 @@ def generate(index=0):
     '''    
 
     
-    '''
+
     lengths=[16,16,4*2,6*3*2,16*2]
     keys=['Ham','RR','Ene','F','v']
     indexes = lengths.copy()
@@ -206,7 +211,7 @@ def generate(index=0):
     print('input: Ham',Ham)
     print('output: v',v)
     print('F',F)
-    '''
+
     
 
     #exit()
@@ -285,15 +290,15 @@ if __name__=="__main__":
         import torch
         device='cuda'
         row = generate(1)        
-        print('_'*80)
-        generate(1)
-        exit()
+        #print('_'*80)
+        #generate(1)
+        #exit()
         
         _data = torch.tensor(row)
         data=torch.tensor(np.array([_data]))
         data=data.to(device)
-        #verify_data(data)
-        #exit()
+        verify_data(data)
+        exit()
         block_size=10000
         with Pool(num_threads) as p:
             result = list(tqdm.tqdm(p.imap(generate, range(block_size)), total=block_size))
