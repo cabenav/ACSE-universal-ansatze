@@ -507,24 +507,30 @@ if __name__=="__main__":
         data=data.to(device)
         #verify_data(data)
 
-        d=data
-        X = d[:,:16]
-        y = d[:,76:92]    #parameters
-        y = d[:,40:46]    #parameters #'F': (40, 76)
-        #print(y)
+        def error_test(data):
+            d=data
+            X = d[:,:16]
+            y = d[:,76:92]    #parameters
+            y = d[:,40:46]    #parameters #'F': (40, 76)
+            #print(y)
+            #exit()
+            Ene_test=d[:,32:36]
+            #def get_err(X_test,y_pred, Ene_test):
+            print('_'*80)
+            get_err_F(X,y, Ene_test)
+            get_err_F_array(X,y, Ene_test)
         #exit()
-        Ene_test=d[:,32:36]
-        #def get_err(X_test,y_pred, Ene_test):
-        print('_'*80)
-        get_err_F(X,y, Ene_test)
-        get_err_F_array(X,y, Ene_test)
-        exit()
-        block_size=10000
+        block_size=5
         with Pool(num_threads) as p:
             result = list(tqdm.tqdm(p.imap(generate, range(block_size)), total=block_size))
             #result = p.map(generate,list(range(block_size)))
             data = np.array(result)
         # program end without saving into file
+
+
+        error_test(torch.tensor(data,device=device))
+        exit()
+        
         verify_data(data)
 
         exit()
