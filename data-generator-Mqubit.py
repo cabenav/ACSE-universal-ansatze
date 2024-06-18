@@ -216,23 +216,32 @@ def get_err_F_array(Ham_flat,F, Ene_test):
     G = _
     print('now got G',G)
 
-
-    print(v)
+    v = torch.tensor(v,device=device)
+    Ham = Ham.type(torch.complex128)
+    print('v',v)
+    print('Ham',Ham)
     
     _ = torch.linalg.matrix_exp(G)
 
-    torch.einsum()
-    
+    v = torch.einsum('naj,ij->nia',_,v)
+    Ene = v2Ene(Ham,v)
+
+    print('Ene     ',Ene.real)
+    print('Ene_test',Ene_test)
+    return 
     m=0
     for i in range(4):
             v[i] = expm(G) @ v[i]
+            # 4 <--   4 x 4  @ 4
             print(v[i])
             print(Ham)
                   
             Ene[m + 1, i] = expectation_value(v[i], Ham.cpu())
-    print(Ene)
+    print('Ene',Ene)
     print(Ene_test)
-    return
+
+    # noe compare Ene and Ene_test
+    return 
 
 
 
