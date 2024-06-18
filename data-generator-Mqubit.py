@@ -130,9 +130,6 @@ def get_err_F(Ham,F, Ene_test):
     A = get_A()
     # Initialize matrices and vectors
     Ene = np.zeros((4, 4), dtype=complex)
-    
-    #F = np.zeros((3, 6), dtype=complex)
-    #w = [0.4, 0.3, 0.2, 0.1]
 
     v=get_v0()
 
@@ -142,39 +139,6 @@ def get_err_F(Ham,F, Ene_test):
 
     def Be(a, b, c, d, e, f):
         return a * A[0] + b * A[1] + c * A[2] + d * A[3] + e * A[4] + f * A[5]
-
-    # Initialize w
-    #w = np.array([0.4, 0.3, 0.2, 0.1])
-
-    # Generate AllPauli array
-    #AllPauli = np.zeros((4, 4, 4, 4), dtype=complex)
-    #for i in range(4):
-    #    for j in range(4):
-    #        AllPauli[i, j] = kron(PauliMatrix[i], PauliMatrix[j])
-
-    # Generate random real numbers in the range [-2, 2] and Hamiltonian
-    #import time
-    #_seed = int((time.time()*1e7 % 1e9))
-    #if TEST:
-    #    np.random.seed(index) #for test
-    #else:
-    #    np.random.seed(_seed+index*100)  #ensure random seeds for each parallel process
-
-    #RR = np.random.uniform(-2, 2, (4, 4))
-    #Aux = AllPauli * RR[:, :, np.newaxis, np.newaxis]
-    #Ham = np.zeros((4, 4), dtype=complex)
-    #for i in range(4):
-    #    for j in range(4):
-    #        Ham += Aux[i, j]
-
-    # Take the real part of Ham
-    #Ham = Ham.real
-    # Print the matrix form of Ham
-
-
-    # Calculate initial expectation values
-    #for i in range(4):
-    #    Ene[0, i] = expectation_value(v[i], Ham)
 
 
     # need v
