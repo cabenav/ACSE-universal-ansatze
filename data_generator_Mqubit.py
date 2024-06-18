@@ -149,11 +149,11 @@ def get_err_F(Ham,F, Ene_test):
     exit()
     return
 
-
+import torch
 import torch.nn as nn
 loss_err = nn.MSELoss()
 @torch.no_grad()
-def get_err_F_array(Ham_flat,F, Ene_test):
+def get_err_F_array(Ham_flat,F, Ene_test, device='cpu'):
     '''From Ham and F, calculate energy, and compare to test date Ene_test
        Ham and F are of array shape, to be computed in parallel
        All input are tensor on cuda, with dimension (num,*)
@@ -184,12 +184,12 @@ def get_err_F_array(Ham_flat,F, Ene_test):
     v = torch.einsum('naj,ij->nia',_eG,v)
     Ene = v2Ene(Ham,v)
 
-    print('Ene     ',Ene.real)
-    print('Ene_test',Ene_test)
-    print('Ene_diff',Ene_test-Ene.real)
-    print('Ene_diff',(Ene_test-Ene.real) <0.001)
-    loss = loss_err(Ene_test,Ene.real)
-    return loss
+    #print('Ene     ',Ene.real)
+    #print('Ene_test',Ene_test)
+    #print('Ene_diff',Ene_test-Ene.real)
+    #print('Ene_diff',(Ene_test-Ene.real) <0.001)
+    err = loss_err(Ene_test,Ene.real)
+    return err.detach().cpu()
 
 
 #generate one data entry as an 1D np array    
