@@ -165,6 +165,7 @@ def get_err_F(Ham,F, Ene_test):
 def get_err_F_array(Ham_flat,F, Ene_test):
     '''From Ham and F, calculate energy, and compare to test date Ene_test
        Ham and F are of array shape, to be computed in parallel
+       All input are tensor on cuda, with dimension (num,*)
     '''
     # reshape into matrix form for matrix calculation
     num = Ham_flat.shape[0]
@@ -172,31 +173,19 @@ def get_err_F_array(Ham_flat,F, Ene_test):
     #print('Ham',Ham)
     #print('F',F)
 
+    # Initialize matrices and vectors
     A = get_A()
     A = torch.tensor(A,device=device)
-
-    # Initialize matrices and vectors
-    Ene = np.zeros((num,4, 4), dtype=complex)
-
     v=get_v0()
-
-    # Define helper functions
-    def expectation_value(ve1, AA):
-        return np.vdot(ve1, AA @ ve1)
-
-    def Be(a, b, c, d, e, f):
-        return a * A[0] + b * A[1] + c * A[2] + d * A[3] + e * A[4] + f * A[5]
-
+    v = torch.tensor(v,device=device)
 
     F = F.type(torch.complex128)
-    #print(F)
-    #print(A)
+    Ham = Ham.type(torch.complex128)
+
+    # start calculation
     G=torch.einsum('ns,sjk->njk',F,A)
     #G = sum(F[i].cpu() * A[i] for i in range(6))
     #print('now got G',G)
-
-    v = torch.tensor(v,device=device)
-    Ham = Ham.type(torch.complex128)
     #print('v',v)
     #print('Ham',Ham)
     
@@ -206,6 +195,9 @@ def get_err_F_array(Ham_flat,F, Ene_test):
 
     print('Ene     ',Ene.real)
     print('Ene_test',Ene_test)
+    print('Ene_diff',Ene_test-Ene.real)
+    print('Ene_diff',(Ene_test-Ene.real) <0.001)
+    
     return 
 
 
@@ -411,11 +403,12 @@ filesize_limit_in_bytes = filesize_limit * 1.0e6 # in bytes
 # (2) 0.01 error in v yields 100% error in Ene
 # (3) RR give the same Ham, v and Ene everytime. This has been verified by fix random seeds
 
-print(f'This code generate data and saves into filename_prefix: {filename_prefix}-<index>.npy')
-print(f'filesize_limit: {filesize_limit} Mb')
-print(f'num_threads: {num_threads} (x 4 scipy threads) = {num_threads * 4}')
-print(f'trials: {trials}')
-print(f'block_size: {block_size}')
+if __name__=="__main__":
+    print(f'This code generate data and saves into filename_prefix: {filename_prefix}-<index>.npy')
+    print(f'filesize_limit: {filesize_limit} Mb')
+    print(f'num_threads: {num_threads} (x 4 scipy threads) = {num_threads * 4}')
+    print(f'trials: {trials}')
+    print(f'block_size: {block_size}')
 
 import os
 def append(filename_prefix, array , filesize_limit = 100.0):
