@@ -166,27 +166,15 @@ def get_err_F_array(Ham_flat,F, Ene_test):
     '''From Ham and F, calculate energy, and compare to test date Ene_test
        Ham and F are of array shape, to be computed in parallel
     '''
-    # test for single entry
-    #print(Ham)
-    #print(F)
-    
-    #Ham_flat = Ham[0]
-    #F=F[0]
-
+    # reshape into matrix form for matrix calculation
     num = Ham_flat.shape[0]
     Ham = Ham_flat.reshape((num,4,4))
-    #Ham = Ham_flat.reshape((4,4))
-    #v = v_flat.reshape((num,4,4))
-    
-    print('Ham',Ham)
-    print('F',F)
-
+    #print('Ham',Ham)
+    #print('F',F)
 
     A = get_A()
     A = torch.tensor(A,device=device)
 
-    
-    
     # Initialize matrices and vectors
     Ene = np.zeros((num,4, 4), dtype=complex)
 
@@ -200,68 +188,25 @@ def get_err_F_array(Ham_flat,F, Ene_test):
         return a * A[0] + b * A[1] + c * A[2] + d * A[3] + e * A[4] + f * A[5]
 
 
-    # need v
-    # given F, Ham, get the energy
-    #print(F[0],A[0])
-
-    #A.reshape(A.shape + (1,))
-
     F = F.type(torch.complex128)
-    print(F)
-    print(A)
-    _=torch.einsum('ns,sjk->njk',F,A)
-    print(_)
-    
+    #print(F)
+    #print(A)
+    G=torch.einsum('ns,sjk->njk',F,A)
     #G = sum(F[i].cpu() * A[i] for i in range(6))
-    G = _
-    print('now got G',G)
+    #print('now got G',G)
 
     v = torch.tensor(v,device=device)
     Ham = Ham.type(torch.complex128)
-    print('v',v)
-    print('Ham',Ham)
+    #print('v',v)
+    #print('Ham',Ham)
     
-    _ = torch.linalg.matrix_exp(G)
-
-    v = torch.einsum('naj,ij->nia',_,v)
+    _eG = torch.linalg.matrix_exp(G)
+    v = torch.einsum('naj,ij->nia',_eG,v)
     Ene = v2Ene(Ham,v)
 
     print('Ene     ',Ene.real)
     print('Ene_test',Ene_test)
     return 
-    m=0
-    for i in range(4):
-            v[i] = expm(G) @ v[i]
-            # 4 <--   4 x 4  @ 4
-            print(v[i])
-            print(Ham)
-                  
-            Ene[m + 1, i] = expectation_value(v[i], Ham.cpu())
-    print('Ene',Ene)
-    print(Ene_test)
-
-    # noe compare Ene and Ene_test
-    return 
-
-
-
-
-
-    # Perform the optimization loop
-    for m in range(3):
-        def fun_to_minimize(params):
-            a, b, c, d, e, f = params
-            total = 0
-            for j in range(4):
-                total += w[j] * expectation_value(expm(Be(a, b, c, d, e, f)) @ v[j], Ham)
-            return total.real    
-        res = minimize(fun_to_minimize, np.zeros(6))
-        F[m] = res.x
-        G = sum(res.x[i] * A[i] for i in range(6))
-    
-        for i in range(4):
-            v[i] = expm(G) @ v[i]
-            Ene[m + 1, i] = expectation_value(v[i], Ham)
 
 
 #generate one data entry as an 1D np array    
