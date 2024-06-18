@@ -149,6 +149,10 @@ def get_err_F(Ham,F, Ene_test):
     exit()
     return
 
+
+import torch.nn as nn
+loss_err = nn.MSELoss()
+@torch.no_grad()
 def get_err_F_array(Ham_flat,F, Ene_test):
     '''From Ham and F, calculate energy, and compare to test date Ene_test
        Ham and F are of array shape, to be computed in parallel
@@ -184,12 +188,13 @@ def get_err_F_array(Ham_flat,F, Ene_test):
     print('Ene_test',Ene_test)
     print('Ene_diff',Ene_test-Ene.real)
     print('Ene_diff',(Ene_test-Ene.real) <0.001)
-    
-    return 
+    loss = loss_err(Ene_test,Ene.real)
+    return loss
 
 
 #generate one data entry as an 1D np array    
 def generate(index=0):
+    
     # Define Pauli matrices
     I = np.eye(2, dtype=complex)
     PauliMatrix = [
@@ -217,18 +222,25 @@ def generate(index=0):
     A[4][2, 1] = -1
     A[5][0, 3] = 1
     A[5][3, 0] = -1
-
-    # Initialize matrices and vectors
-    Ene = np.zeros((4, 4), dtype=complex)
+    
     v = np.zeros((4, 4), dtype=complex)
-    F = np.zeros((3, 6), dtype=complex)
-    #w = [0.4, 0.3, 0.2, 0.1]
-
     v[0] = [1, 0, 0, 0]
     v[1] = [0, 1, 0, 0]
     v[2] = [0, 0, 1, 0]
     v[3] = [0, 0, 0, 1]
 
+    
+    # Initialize matrices and vectors
+    Ene = np.zeros((4, 4), dtype=complex)
+
+    F = np.zeros((3, 6), dtype=complex)
+
+
+
+    # need AllPauli as well
+    #A = get_A()
+    #v = get_v0()
+    
     # Define helper functions
     def expectation_value(ve1, AA):
         return np.vdot(ve1, AA @ ve1)
