@@ -13,13 +13,17 @@ import tqdm
 
 
 def v2Ene(Ham,v):
+    '''calculate energy from v and Ham
+    '''
     #print(torch.einsum('ij,j->i',AA , ve1)) # original Ham @ v, not in tensor/in parallel
     #Ene_pred =  torch.vdot(v, Ham @ v)
     Ham_v = torch.einsum('nij, nvj->nvi', Ham , v)  #Ham @ v
     Ene_pred =  torch.linalg.vecdot(v, Ham_v)
     return Ene_pred
 
-def flat_v2Ene(Ham_flat,v_flat):    
+def flat_v2Ene(Ham_flat,v_flat):
+    '''For flat matrices from raw input data, reshape them and call v2Ene() to calculate the energy
+    '''
     num = v_flat.shape[0]
     Ham = Ham_flat.reshape((num,4,4))
     v = v_flat.reshape((num,4,4))
@@ -28,23 +32,12 @@ def flat_v2Ene(Ham_flat,v_flat):
 ##  accuracy: reconstruct energy and calculate the absolute error
 # this function is used to verified data. not used in data generation
 def get_err(X_test,y_pred, Ene_test):
-    #return torch.vdot(ve1, AA @ ve1)
+    '''input: X for Ham, y for v
+       compute energy and compare to Ene_test
+    '''
     Ene_pred = flat_v2Ene(Ham_flat = X_test,v_flat=y_pred)
-    #Ene_pred = v2Ene(v,Ham)
-    
-    #num = X_test.shape[0]
-    #Ham = X_test.reshape((num,4,4))
-    #v = y_pred.reshape((num,4,4))
 
-    #print('v   ',v)    
-    # an average error of 0.1 in v wourld lead err=2 in Ene
-    #delta=1.02 #0.1 #1.79
-    #print('delta:',delta)
-    #v = v + delta
-    #v = v * delta
-    #print('v * ',v)
-    
-
+    #print sample data
     print(Ene_test[:10])
     print(Ene_pred[:10])
     e0=Ene_test.sum(dim=1)
@@ -61,8 +54,9 @@ def get_err(X_test,y_pred, Ene_test):
     #input()
     return err
 
-# check if one can get the energy from v and Ham
 def verify_data(d):
+    '''check if one can get the energy from v and Ham
+    '''
     print(d)
     d = d.clone().detach()
     d.to(device)
@@ -76,6 +70,8 @@ def verify_data(d):
 
 
 def get_A():
+    '''Return Helper matrix A, as numpy array
+    '''
     # Define Pauli matrices
     I = np.eye(2, dtype=complex)
     PauliMatrix = [
@@ -107,6 +103,8 @@ def get_A():
     return A
 
 def get_v0():
+    '''Return helper matrix v
+    '''
     v = np.zeros((4, 4), dtype=complex)
     v[0] = [1, 0, 0, 0]
     v[1] = [0, 1, 0, 0]
@@ -116,23 +114,20 @@ def get_v0():
 
 #def get_err_F(X_test,y_pred, Ene_test):
 def get_err_F(Ham,F, Ene_test):
-    # test for single entry
+    '''test for single entry, version without tensor
+    '''
+    # only take the first entry
     Ham_flat = Ham[0]
     F=F[0]
-
-    #num = Ham_flat.shape[0]
-    #Ham = Ham_flat.reshape((num,4,4))
-    Ham = Ham_flat.reshape((4,4))
-    #v = v_flat.reshape((num,4,4))
     
-    print('Ham',Ham)
-    print('F',F)
+    Ham = Ham_flat.reshape((4,4))
+    #print('Ham',Ham)
+    #print('F',F)
 
     A = get_A()
+    v=get_v0()
     # Initialize matrices and vectors
     Ene = np.zeros((4, 4), dtype=complex)
-
-    v=get_v0()
 
     # Define helper functions
     def expectation_value(ve1, AA):
@@ -141,25 +136,17 @@ def get_err_F(Ham,F, Ene_test):
     def Be(a, b, c, d, e, f):
         return a * A[0] + b * A[1] + c * A[2] + d * A[3] + e * A[4] + f * A[5]
 
-
-    # need v
-    # given F, Ham, get the energy
-    print(F[0],A[0])
-    
-    #_=torch.einsum('i,ijk->jk',F,A)
-    #print(_)
     G = sum(F[i].cpu() * A[i] for i in range(6))
     print('now got G',G)
-    #return
     m=0
     for i in range(4):
             v[i] = expm(G) @ v[i]
-            print(v[i])
-            print(Ham)
-                  
+            #print(v[i])
+            #print(Ham)                  
             Ene[m + 1, i] = expectation_value(v[i], Ham.cpu())
-    print(Ene)
-    print(Ene_test)
+    print('Ene     ',Ene[m+1].real)
+    print('Ene_test',Ene_test[0])
+    exit()
     return
 
 def get_err_F_array(Ham_flat,F, Ene_test):
