@@ -113,6 +113,7 @@ def get_v0():
     v[2] = [0, 0, 1, 0]
     v[3] = [0, 0, 0, 1]
     return v
+
 #def get_err_F(X_test,y_pred, Ene_test):
 def get_err_F(Ham,F, Ene_test):
     # test for single entry
@@ -150,6 +151,78 @@ def get_err_F(Ham,F, Ene_test):
     G = sum(F[i].cpu() * A[i] for i in range(6))
     print('now got G',G)
     #return
+    m=0
+    for i in range(4):
+            v[i] = expm(G) @ v[i]
+            print(v[i])
+            print(Ham)
+                  
+            Ene[m + 1, i] = expectation_value(v[i], Ham.cpu())
+    print(Ene)
+    print(Ene_test)
+    return
+
+def get_err_F_array(Ham_flat,F, Ene_test):
+    '''From Ham and F, calculate energy, and compare to test date Ene_test
+       Ham and F are of array shape, to be computed in parallel
+    '''
+    # test for single entry
+    #print(Ham)
+    #print(F)
+    
+    #Ham_flat = Ham[0]
+    #F=F[0]
+
+    num = Ham_flat.shape[0]
+    Ham = Ham_flat.reshape((num,4,4))
+    #Ham = Ham_flat.reshape((4,4))
+    #v = v_flat.reshape((num,4,4))
+    
+    print('Ham',Ham)
+    print('F',F)
+
+
+    A = get_A()
+    A = torch.tensor(A,device=device)
+
+    
+    
+    # Initialize matrices and vectors
+    Ene = np.zeros((num,4, 4), dtype=complex)
+
+    v=get_v0()
+
+    # Define helper functions
+    def expectation_value(ve1, AA):
+        return np.vdot(ve1, AA @ ve1)
+
+    def Be(a, b, c, d, e, f):
+        return a * A[0] + b * A[1] + c * A[2] + d * A[3] + e * A[4] + f * A[5]
+
+
+    # need v
+    # given F, Ham, get the energy
+    #print(F[0],A[0])
+
+    #A.reshape(A.shape + (1,))
+
+    F = F.type(torch.complex128)
+    print(F)
+    print(A)
+    _=torch.einsum('ns,sjk->njk',F,A)
+    print(_)
+    
+    #G = sum(F[i].cpu() * A[i] for i in range(6))
+    G = _
+    print('now got G',G)
+
+
+    print(v)
+    
+    _ = torch.linalg.matrix_exp(G)
+
+    torch.einsum()
+    
     m=0
     for i in range(4):
             v[i] = expm(G) @ v[i]
@@ -435,6 +508,7 @@ if __name__=="__main__":
         #def get_err(X_test,y_pred, Ene_test):
         print('_'*80)
         get_err_F(X,y, Ene_test)
+        get_err_F_array(X,y, Ene_test)
         exit()
         block_size=10000
         with Pool(num_threads) as p:
