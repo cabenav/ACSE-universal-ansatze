@@ -99,7 +99,7 @@ print("Starting Energies:", Ene[0].real)
 print("Approx   Energies:", Ene[1].real)
 print("ff:", f) #This is the input
 print("A[0] =", np.reshape(A[0].real,(4,4))) #These are the output parameters
-print("A[1] =", np.reshape(A[1].real,(4,4)))
+#print("A[1] =", np.reshape(A[1].real,(4,4)))
 
 
 # Plot the results
