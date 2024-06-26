@@ -97,8 +97,8 @@ for m in range(it):
 print("Exact    Energies:", eigvalsh(Ham))
 print("Starting Energies:", Ene[0].real)
 print("Approx   Energies:", Ene[1].real)
-print("ff:", f) #This is the input
-print("A[0] =", np.reshape(A[0].real,(4,4))) #These are the output parameters
+print("Hamiltonian parameters (random) =", f) #This is the 4x4 input
+print("Ansatz paramaters =", np.reshape(A[0].real,(4,4))) #These are the output parameters, the 4x4 output
 #print("A[1] =", np.reshape(A[1].real,(4,4)))
 
 
