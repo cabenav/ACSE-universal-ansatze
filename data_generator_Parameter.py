@@ -14,7 +14,6 @@ def generate(index=0):
    else:
       np.random.seed(_seed+index*100)  #ensure random seeds for each parallel process
 
-
    #Number of qubits
    M = 2
    #Number of iterations
@@ -105,13 +104,13 @@ def generate(index=0):
 
 
    # Printing the results
-
-   print("Exact    Energies:", eigvalsh(Ham))
-   print("Starting Energies:", Ene[0].real)
-   print("Approx   Energies:", Ene[1].real)
-   print("Hamiltonian parameters (random) =", f) #This is the 4x4 input
-   print("Ansatz paramaters =", np.reshape(A[0].real,(4,4))) #These are the output parameters, the 4x4 output
-   #print("A[1] =", np.reshape(A[1].real,(4,4)))
+   if False:
+      print("Exact    Energies:", eigvalsh(Ham))
+      print("Starting Energies:", Ene[0].real)
+      print("Approx   Energies:", Ene[1].real)
+      print("Hamiltonian parameters (random) =", f) #This is the 4x4 input
+      print("Ansatz paramaters =", np.reshape(A[0].real,(4,4))) #These are the output parameters, the 4x4 output
+      #print("A[1] =", np.reshape(A[1].real,(4,4)))
 
    if __name__=="__main__":
       print('Start plotting')
@@ -131,6 +130,43 @@ def generate(index=0):
       plt.xlabel('Iteration')
       plt.ylabel('Energy')
       plt.show()
+
+   _data=[
+        Ham.real, # the constructed hamiltonian  
+        Ham.imag,       
+        f.real,  # the initial seed for constructin Hamiltonian
+        f.imag,
+        Ene.real,   # the energy converges
+        Ene.imag,   # the energy converges
+        A.real,        # F goes to zero
+        A.imag,        # F goes to zero
+        v.real,             # v contains the para for ground state, as the output
+        v.imag,
+    ]
+   if False: 
+      print(_data)
+      print('print meta info for _data')      
+      index=0
+      for _ in _data:
+         print(f"index:{index}, size:{_.size}, shape:{_.shape}")
+         index += _.size
+      '''
+      index:0, size:16, shape:(4, 4)
+      index:16, size:16, shape:(4, 4)
+      index:32, size:16, shape:(4, 4)
+      index:48, size:16, shape:(4, 4)
+      index:64, size:12, shape:(3, 4)
+      index:76, size:12, shape:(3, 4)
+      index:88, size:32, shape:(2, 16)
+      index:120, size:32, shape:(2, 16)
+      index:152, size:16, shape:(4, 4)
+      index:168, size:16, shape:(4, 4)
+      '''
+
+   _data2 = [ _.flatten() for _ in _data ]
+   data=np.concatenate( _data2 )
+   #print(data)
+   return data
 
 
 if __name__=="__main__":
