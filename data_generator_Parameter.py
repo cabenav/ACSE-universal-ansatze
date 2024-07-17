@@ -5,6 +5,119 @@ import matplotlib.pyplot as plt
 
 TEST=False
 
+
+import torch
+import torch.nn as nn
+loss_err = nn.MSELoss()
+@torch.no_grad()
+def get_err_F_array(f_flat,A_flat, Ene_test, device='cpu'):
+    '''From f and A, calculate energy, and compare to test data Ene_test
+       f and A are arrays of data entries, to be computed in parallel
+       All input are tensor on cuda, with dimension (num,*)
+    '''
+
+#def get_err_F_array(Ham_flat,F, Ene_test, device='cpu'):
+    '''From Ham and F, calculate energy, and compare to test date Ene_test
+       Ham and F are of array shape, to be computed in parallel
+       All input are tensor on cuda, with dimension (num,*)
+    '''
+    # reshape into matrix form for matrix calculation
+    num = f_flat.shape[0]
+
+    Ham = Ham_flat.reshape((num,4,4))
+    #print('Ham',Ham)
+    #print('F',F)
+
+    # Initialize matrices and vectors
+    A = get_A()
+    A = torch.tensor(A,device=device)
+    v=get_v0()
+    v = torch.tensor(v,device=device)
+
+    F = F.type(torch.complex128)
+    Ham = Ham.type(torch.complex128)
+
+    # start calculation
+    G=torch.einsum('ns,sjk->njk',F,A)
+    #G = sum(F[i].cpu() * A[i] for i in range(6))
+    #print('now got G',G)
+    #print('v',v)
+    #print('Ham',Ham)
+    
+    _eG = torch.linalg.matrix_exp(G)
+    v = torch.einsum('naj,ij->nia',_eG,v)
+    Ene = v2Ene(Ham,v)
+
+    #print('Ene     ',Ene.real)
+    #print('Ene_test',Ene_test)
+    #print('Ene_diff',Ene_test-Ene.real)
+    #print('Ene_diff',(Ene_test-Ene.real) <0.001)
+
+    # compare all four terms
+    # err = loss_err(Ene_test,Ene.real)
+    # compare only the ground state energy
+    #print((Ene_test.min(dim=1)).shape)
+    #print((Ene.real.min(dim=1)).shape)
+    e0=torch.min(Ene_test,dim=1).values
+    e1=torch.min(Ene.real,dim=1).values
+    print(e0)
+    print(e1)
+    err = loss_err(e0,e1)
+
+    # compute average of Ene_pred
+    Ene_pred_abs_mean = Ene.real.sum(dim=1).abs().mean().item()
+    print(f'Ene_pred_abs_mean  = {Ene_pred_abs_mean}')
+    Ene_pred_abs_mean2 = Ene.real.abs().mean().item()
+    print(f'Ene_pred_abs_mean2 = {Ene_pred_abs_mean2}')
+    
+    return err.detach().cpu()
+
+
+# Generate AllPauli array
+def get_f_ham(PauliMatrix):
+      if M==2:
+         AllPauli = np.zeros((4, 4, 2**M, 2**M), dtype=complex)
+         for i in range(4):
+            for j in range(4):
+               AllPauli[i, j] = kron(PauliMatrix[i], PauliMatrix[j])
+         f = np.random.uniform(-10, 10, (4, 4))   #This is the input: a 4x4 matrix
+         Aux = AllPauli * f[:, :, np.newaxis, np.newaxis]
+         Ham = sum(Aux[i,j] for i in range (4) for j in range(4))
+      elif M ==3:
+         AllPauli = np.zeros((4, 4, 4, 2**M, 2**M), dtype=complex)
+         for i in range(4):
+            for j in range(4):
+               for k in range(4):
+                  AllPauli[i, j, k] = kron(kron(PauliMatrix[i], PauliMatrix[j]), PauliMatrix[k])
+         f = np.random.uniform(-4, 4, (4, 4, 4))
+         Aux = AllPauli * f[:, :, :, np.newaxis, np.newaxis]
+         Ham = sum(Aux[i,j,k] for i in range (4) for j in range(4) for k in range(4))
+      return f, Ham, AllPauli
+
+#Number of qubits
+M = 2
+#Number of iterations
+it = 2
+
+def get_Pauli():
+   # Define Pauli matrices
+   I = np.eye(2, dtype=complex)
+   PauliMatrix = [
+      np.array([[1, 0], [0, 1]], dtype=complex),  # Pauli I
+      np.array([[0, 1], [1, 0]], dtype=complex),  # Pauli X
+      np.array([[0, -1j], [1j, 0]], dtype=complex),  # Pauli Y
+      np.array([[1, 0], [0, -1]], dtype=complex)  # Pauli Z
+   ]
+   return PauliMatrix
+
+def get_w():
+   # Initialize w
+   w = np.zeros((2**M))
+   for i in range(2**M):
+      w[i] = 2**M-i
+   w = w/sum(w)
+   return w
+
 def generate(index=0):
    # Generate random real numbers in the range [-2, 2] and Hamiltonian
    import time
@@ -14,30 +127,14 @@ def generate(index=0):
    else:
       np.random.seed(_seed+index*100)  #ensure random seeds for each parallel process
 
-   #Number of qubits
-   M = 2
-   #Number of iterations
-   it = 2
-
-   # Define Pauli matrices
-   I = np.eye(2, dtype=complex)
-   PauliMatrix = [
-      np.array([[1, 0], [0, 1]], dtype=complex),  # Pauli I
-      np.array([[0, 1], [1, 0]], dtype=complex),  # Pauli X
-      np.array([[0, -1j], [1j, 0]], dtype=complex),  # Pauli Y
-      np.array([[1, 0], [0, -1]], dtype=complex)  # Pauli Z
-   ]
-
+   PauliMatrix = get_Pauli()
+   w = get_w()
+   f, Ham, AllPauli = get_f_ham(PauliMatrix)
+   
    # Initialize matrices and vectors containing the relevant data
-   Ene = np.zeros((it+1, 2**M), dtype=complex)
-   v = np.zeros((2**M, 2**M), dtype=complex)
-   A = np.zeros((it, 2**M*2**M), dtype=complex)
-
-   # Initialize w
-   w = np.zeros((2**M))
-   for i in range(2**M):
-      w[i] = 2**M-i
-   w = w/sum(w)
+   Ene = np.zeros((it+1, 2**M), dtype=complex)     # Energy
+   v = np.zeros((2**M, 2**M), dtype=complex)       # The exponent
+   A = np.zeros((it, 2**M*2**M), dtype=complex)    # Ansatz parameter
 
    for i in range(2**M):
       v[i,i] = 1
@@ -54,25 +151,9 @@ def generate(index=0):
       Aux1 = AllPauli * params1[:, :, :, np.newaxis, np.newaxis]
       return sum(Aux1[i, j, k]*1j for i in range(4) for j in range(4) for k in range(4))
 
-   # Generate AllPauli array
-   if M==2:
-      AllPauli = np.zeros((4, 4, 2**M, 2**M), dtype=complex)
-      for i in range(4):
-         for j in range(4):
-            AllPauli[i, j] = kron(PauliMatrix[i], PauliMatrix[j])
-      f = np.random.uniform(-10, 10, (4, 4))   #This is the input: a 4x4 matrix
-      Aux = AllPauli * f[:, :, np.newaxis, np.newaxis]
-      Ham = sum(Aux[i,j] for i in range (4) for j in range(4))
-   elif M ==3:
-      AllPauli = np.zeros((4, 4, 4, 2**M, 2**M), dtype=complex)
-      for i in range(4):
-         for j in range(4):
-            for k in range(4):
-               AllPauli[i, j, k] = kron(kron(PauliMatrix[i], PauliMatrix[j]), PauliMatrix[k])
-      f = np.random.uniform(-4, 4, (4, 4, 4))
-      Aux = AllPauli * f[:, :, :, np.newaxis, np.newaxis]
-      Ham = sum(Aux[i,j,k] for i in range (4) for j in range(4) for k in range(4))
+   
 
+   
 
    # Calculate initial expectation values
    for i in range(2**M):
@@ -104,7 +185,7 @@ def generate(index=0):
 
 
    # Printing the results
-   if False:
+   if TEST:
       print("Exact    Energies:", eigvalsh(Ham))
       print("Starting Energies:", Ene[0].real)
       print("Approx   Energies:", Ene[1].real)
@@ -132,19 +213,19 @@ def generate(index=0):
       plt.show()
 
    _data=[
-        Ham.real, # the constructed hamiltonian  
-        Ham.imag,       
-        f.real,  # the initial seed for constructin Hamiltonian
-        f.imag,
-        Ene.real,   # the energy converges
-        Ene.imag,   # the energy converges
-        A.real,        # F goes to zero
-        A.imag,        # F goes to zero
-        v.real,             # v contains the para for ground state, as the output
-        v.imag,
+      f,    # the initial seed for constructing Hamiltonian
+      A.real,        # Ansatz parameter, only A.real[0] matters, others are zero
+      A.imag,        # imag are zero
+      Ene.real,   # the energy converges
+      Ene.imag,   # the energy converges
+      Ham.real, # the constructed hamiltonian  
+      Ham.imag,             
+      v.real,             # v contains the para for ground state, as the output
+      v.imag,
     ]
-   if False: 
-      print(_data)
+   if True: 
+      for _ in _data:
+         print(_)
       print('print meta info for _data')      
       index=0
       for _ in _data:
@@ -152,15 +233,14 @@ def generate(index=0):
          index += _.size
       '''
       index:0, size:16, shape:(4, 4)
-      index:16, size:16, shape:(4, 4)
-      index:32, size:16, shape:(4, 4)
-      index:48, size:16, shape:(4, 4)
-      index:64, size:12, shape:(3, 4)
-      index:76, size:12, shape:(3, 4)
-      index:88, size:32, shape:(2, 16)
-      index:120, size:32, shape:(2, 16)
+      index:16, size:32, shape:(2, 16)
+      index:48, size:32, shape:(2, 16)
+      index:80, size:12, shape:(3, 4)
+      index:92, size:12, shape:(3, 4)
+      index:104, size:16, shape:(4, 4)
+      index:120, size:16, shape:(4, 4)
+      index:136, size:16, shape:(4, 4)
       index:152, size:16, shape:(4, 4)
-      index:168, size:16, shape:(4, 4)
       '''
 
    _data2 = [ _.flatten() for _ in _data ]
@@ -170,4 +250,5 @@ def generate(index=0):
 
 
 if __name__=="__main__":
+   TEST=True
    generate()
