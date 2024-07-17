@@ -46,3 +46,15 @@ for arg in sys.argv[1:]:
             globals()[key] = attempt
         else:
             raise ValueError(f"Unknown config key: {key}")
+
+def print_config(globals_output):
+    '''
+    print varibles in the current runtime
+    how to use:
+        from configurator import print_config
+        print_config(globals()) 
+    '''
+    config_keys = [k for k,v in globals_output.items() if not k.startswith('_') and isinstance(v, (int, float, bool, str)) and k not in ['arg','key','val','attempt']]
+    config = {k: globals_output[k] for k in config_keys} # will be useful for logging
+    import json
+    print(json.dumps(config, indent=2))
