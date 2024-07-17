@@ -9,13 +9,15 @@ all:my-model_F
 
 my-model_F:
 	$(py) model_F.py \
---tag="v0.2.1-F-rnn" \
+--tag="v0.2.4-min-F-rnn" \
 --batch_size=4256 \
 --num_hidden_layers=6 \
---hidden_size=1024  \
---data_file_limit=-1 \
+--hidden_size=256  \
+--data_file_limit=20 \
 --learning_rate=0.0001 \
---gpu=7
+--gpu=4
+
+
 
 my-model:
 	$(py) model.py \
@@ -35,7 +37,8 @@ my-model:
 # large batch_size=1024 seems to be fine
 
 data:
-	$(py) data-generator-Mqubit.py
+	$(py) data_generator_Pool.py
+#	$(py) data-generator-Mqubit.py
 
 model:
 	CUDA_VISIBLE_DEVICES=${GPU} $(py) model.py ${argv}
