@@ -368,7 +368,8 @@ def model_train(model, X_train, y_train, X_val, y_val,best_err=np.inf,best_weigh
             loss = get_reletive_loss(y_val,y_pred)
             _loss = loss.detach().cpu().item()
             #err = get_err(X_val, y_pred, Ene_test)
-            err = get_err_F_array(X_val, y_pred, Ene_test, device=device)
+            #err = get_err_F_array(X_val, y_pred, Ene_test, device=device)
+            err = _loss
             if err <  best_err:
                 #best_acc = acc
                 best_err = err
@@ -427,7 +428,11 @@ if os.path.exists(filename_checkpoint):
         with torch.no_grad():
             y_pred = model(X_test[:batch_size])
             #loss = loss_fn(y_pred,y_test)
-            best_err = get_err_F_array(X_test[:batch_size], y_pred, Ene_test[:batch_size],device=device)
+            #best_err = get_err_F_array(X_test[:batch_size], y_pred, Ene_test[:batch_size],device=device)
+
+            _loss = get_reletive_loss(y_test[:batch_size],y_pred).detach().cpu().item()            
+            err = _loss
+
             #best_err = get_err(X_test[:batch_size], y_pred, Ene_test[:batch_size])
             print('loaded previous weights with best_acc:',best_err,'loss_list length:',len(loss_list))
             # an estimate on best acc, in fact one can read from data file. best_err = loss_np_array[-1,4]
