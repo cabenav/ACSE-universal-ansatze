@@ -19,10 +19,10 @@ learning_rate=0.000001  #default 0.001
 torch.set_printoptions(linewidth=120)
 np.set_printoptions(linewidth=120)
 
-data_folder='data'
+#data_folder='data'
+data_folder='/public/home/weileizeng/ansatz-data/parameter/'
 result_folder='checkpoints'
-title='m4'
-title='m6'
+title='p1'
 tag='v0'
 gpu=0
 #single_data_file=False
@@ -32,7 +32,7 @@ exec(open('configurator.py').read()) # overrides from command line or config fil
 ######################### config end   ###############################
 LAYERS= [hidden_size for _ in range(num_hidden_layers+2)]
 LAYERS[0]=16
-LAYERS[-1]=6  # v (76, 108) from 76 to 92 for real part; imag is currently zero
+LAYERS[-1]=16  # v (76, 108) from 76 to 92 for real part; imag is currently zero
 note=f'{tag}-ReL-Adam{learning_rate}-bs{batch_size}-layers{"_".join( str(_) for _ in LAYERS)}'
 filename_prefix=f'{data_folder}/{title}'  #for loading data
 filename_checkpoint=f'{result_folder}/{title}-{note}-check.pt'
@@ -134,7 +134,7 @@ def load(filename_prefix): #loadd all files with this filename prefix
     for filename in filelist:
         print('loading...',filename)
         _data=np.load(filename)
-        assert _data.shape[1] == 108  # 42
+        assert _data.shape[1] == 168 #108  # 42
         data_list.append(_data)
         #if single_data_file==True:
         #print('only processing',filename,'and skip other data files')
@@ -167,11 +167,8 @@ print(d[0])
 
 
 
-X = d[:,:16]
-#y = d[:,-10:]  #energy and parameters
-#y = d[:,-6:]    #parameters
-#y = d[:,76:92]    #parameters
-y = d[:,40:46]    #parameters #'F': (40, 76)
+X = d[:,:16]  #random input for Ham
+y = d[:,16:32]    # Ansatz parameter
 
 # use the last 1000 for evaluation
 eval_size=d.shape[0]//5
@@ -179,7 +176,7 @@ X_test,y_test = X[-eval_size:],y[-eval_size:]
 X,y = X[:-eval_size],y[:-eval_size]
 
 #Ene_test=d[-eval_size:,32:40] # to calculate accuracy
-Ene_test=d[-eval_size:,32:36] # to calculate accuracy # real part only
+Ene_test=d[-eval_size:,88:92] # to calculate accuracy # real part only
 #Ene_test = Ene_test.cpu()
 Ene_abs_mean = Ene_test.sum(dim=1).abs().mean().item()
 
