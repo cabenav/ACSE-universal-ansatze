@@ -75,11 +75,21 @@ def get_err(X_test,y_pred, Ene_test):
     Ham_v = torch.einsum('nij, nvj->nvi', Ham , v)  #Ham @ v for n in parallel
     Ene_pred =  torch.linalg.vecdot(v, Ham_v)       # vdot for n in parallel
 
-    
-    e0=Ene_test.sum(dim=1)
-    e1=Ene_pred.sum(dim=1)
+    # compare the sum
+    # e0=Ene_test.sum(dim=1)
+    # e1=Ene_pred.sum(dim=1)
+    # compare all four term
+    # e0=Ene_test 
+    # e1=Ene_pred
+    # compare the min (gorund state energy
+    e0=Ene_test.min(dim=1)
+    e1=Ene_pred.min(dim=1)
     #err = loss_err(Ene_pred, Ene_test)
     err = loss_err(e0,e1)
+
+    Ene_pred_abs_mean = Ene_pred.sum(dim=1).abs().mean().item()
+
+    print(f'Ene_pred_abs_mean={Ene_pred_abs_mean}')
     return err.detach().cpu()
 '''
     print( ( (e1-e0)/e0 )  )
@@ -376,7 +386,8 @@ def model_train(model, X_train, y_train, X_val, y_val,best_err=np.inf,best_weigh
         
         torch.save(loss_np_array,filename_loss)
         print(f'loss list saved into {filename_loss} {loss_np_array.shape} at loss={loss_np_array[-1]}, Ene_abs_mean={Ene_abs_mean}')
-        
+
+        #Ene_val_abs_mean = Ene_test.sum(dim=1).abs().mean().item()
             
         print('target:     ',end='')
         print((y_val)[0])
