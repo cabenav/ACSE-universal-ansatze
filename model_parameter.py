@@ -7,7 +7,9 @@ import tqdm
 import torch
 from parallel import Parallel
 
-from data_generator_Mqubit import get_err_F_array
+#from data_generator_Mqubit import get_err_F_array
+
+from data_generator_Parameter import get_err_F_array
 
 ######################### config start ###############################
 hidden_size= 64 * 1 * 1
@@ -27,6 +29,8 @@ tag='v0'
 gpu=0
 #single_data_file=False
 data_file_limit=-1
+
+evaluation_only = False
 
 exec(open('configurator.py').read()) # overrides from command line or config file
 ######################### config end   ###############################
@@ -436,6 +440,10 @@ if os.path.exists(filename_checkpoint):
             #best_err = get_err(X_test[:batch_size], y_pred, Ene_test[:batch_size])
             print('loaded previous weights with best_acc:',best_err,'loss_list length:',len(loss_list))
             # an estimate on best acc, in fact one can read from data file. best_err = loss_np_array[-1,4]
+
+            if evaluation_only:
+                best_err = get_err_F_array(X_test[:batch_size], y_pred, Ene_test[:batch_size],device=device)
+                exit()
 else:
     print('did not find previous weights:',filename_checkpoint)
 
