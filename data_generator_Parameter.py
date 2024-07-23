@@ -3,7 +3,7 @@ from scipy.linalg import expm, kron, eigvalsh
 from scipy.optimize import minimize
 import matplotlib.pyplot as plt
 
-TEST=True
+TEST=False
 
 #Number of qubits
 M = 2
@@ -19,16 +19,11 @@ def get_err_F_array(f_flat,A_flat, Ene_test, device='cpu'):
        f and A are arrays of data entries, to be computed in parallel
        All input are tensor on cuda, with dimension (num,*)
     '''
-
-#def get_err_F_array(Ham_flat,F, Ene_test, device='cpu'):
-    '''From Ham and F, calculate energy, and compare to test date Ene_test
-       Ham and F are of array shape, to be computed in parallel
-       All input are tensor on cuda, with dimension (num,*)
-    '''
-    # reshape into matrix form for matrix calculation
-    num = f_flat.shape[0]
-
+    
+    num = f_flat.shape[0]  # number of entries
     f = f_flat.reshape((num,4,4))  #for M==2
+
+    # get Hamiltonian from f
     Ham = torch.zeros((num,4,4),dtype=torch.complex128)
     PauliMatrix = get_Pauli()
     AllPauli = get_AllPauli(PauliMatrix)
@@ -40,52 +35,34 @@ def get_err_F_array(f_flat,A_flat, Ene_test, device='cpu'):
       Ham[i]= torch.tensor(h)
     Ham = Ham.to(device)
 
-    #Ham = f2ham(f)
+    
 
-    #Ham = Ham_flat.reshape((num,4,4))
-    #print('Ham',Ham)
-    #print('F',F)
-
-    # Initialize matrices and vectors
-    #A = get_A()
+    # Initialize matrices and vectors   
     AllPauli = torch.tensor(AllPauli, device=device)
-    #A = torch.tensor(A,device=device)
-    v=get_v0()
-    v = torch.tensor(v,device=device)
-
-    #F = F.type(torch.complex128)
     f = f.type(torch.complex128)
-    #Ham = Ham.type(torch.complex128)
-    #print('A_flat:',A_flat)
-    A = A_flat[:,:16] + A_flat[:,16*2:16*3] * 1j
+    #A = A_flat[:,:16] + A_flat[:,16*2:16*3] * 1j
+    #A = A_flat  + torch.zeros_like(A_flat) * 1j
+    A = A_flat.type(torch.complex128)
+    A = A.reshape((num, 4,4))
     #print('A.shape:',A.shape)
     #print('A:',A)
-    A = A.reshape((num, 4,4))
-    print('A.shape:',A.shape)
-    print('A:',A)
-    #print(A_flat[:32])
-    #A = A_flat.reshape((4,4))
+    
     
     # start calculation
-    print('device',f.device,AllPauli.device)
-    print('f.shape,AllPauli.shape',f.shape,AllPauli.shape)
-    print('device',A.device,AllPauli.device)
-    print('A.shape,AllPauli.shape',A.shape,AllPauli.shape)
-    #G=torch.einsum('ns,sjk->njk',f,AllPauli)
-    #G=torch.einsum('nst,stjk->njk',f,AllPauli)
-    #G=torch.einsum('nxy,xyjk->njk',A,AllPauli)
+    #print('device',A.device,AllPauli.device)
+    #print('A.shape,AllPauli.shape',A.shape,AllPauli.shape)
     G=torch.einsum('nxy,xyjk->njk',A*1j,AllPauli)
     #G = sum(F[i].cpu() * A[i] for i in range(6))
-    print('now got G',G)
+    #print('now got G',G)
     
-   
-    #print('Ham',Ham)
-    
-    _eG = torch.linalg.matrix_exp(G)
+    _eG = torch.linalg.matrix_exp(G)  # compute exponent
+
+    v=get_v0()
+    v = torch.tensor(v,device=device)
     v = torch.einsum('naj,ij->nia',_eG,v)
     Ene = v2Ene(Ham,v)
-    print('v',v)
-    print('Ene:',Ene)
+    #print('v',v)
+    #print('Ene:',Ene)
 
     #print('Ene     ',Ene.real)
     #print('Ene_test',Ene_test)
@@ -97,17 +74,14 @@ def get_err_F_array(f_flat,A_flat, Ene_test, device='cpu'):
     # compare only the ground state energy
     #print((Ene_test.min(dim=1)).shape)
     #print((Ene.real.min(dim=1)).shape)
+
+    print('ground state energy as the minimum')
     e0=torch.min(Ene_test,dim=1).values
     e1=torch.min(Ene.real,dim=1).values
-    print(e0)
-    print(e1)
+    #print(e0)
+    #print(e1)
+    print('e0-e1 < eps:',(e0-e1).abs()< (eps:=1e-10))
     err = loss_err(e0,e1)
-
-    # compute average of Ene_pred
-    Ene_pred_abs_mean = Ene.real.sum(dim=1).abs().mean().item()
-    print(f'Ene_pred_abs_mean  = {Ene_pred_abs_mean}')
-    Ene_pred_abs_mean2 = Ene.real.abs().mean().item()
-    print(f'Ene_pred_abs_mean2 = {Ene_pred_abs_mean2}')
     
     return err.detach().cpu()
 
@@ -252,11 +226,11 @@ def generate(index=1):
          Aux2 = AllPauli * np.reshape(A[m],(4,4))[:, :, np.newaxis, np.newaxis]
          #print('Aux2:',Aux2)
          Antiunif = sum(Aux2[i, j]*1j for i in range (4) for j in range(4))
-         print('Antiunif:',Antiunif)
+         #print('Antiunif:',Antiunif)
          for i in range(2**M):
             v[i] = expm(Antiunif) @ v[i]
             Ene[m + 1, i] = expectation_value(v[i], Ham)
-         print('v:',v)
+         #print('v:',v)
          #print()
       elif M==3:
          res = minimize(fun_to_minimize, np.zeros(64))

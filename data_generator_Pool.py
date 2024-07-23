@@ -71,16 +71,18 @@ if __name__=="__main__":
             d=data
             
             X = d[:,:16]      # f
-            y = d[:,16:80]     # A
+            #y = d[:,16:80]     # A
+            y = d[:,16:32]     # A
             #print(y)
             #exit()
             Ene_test=d[:,88:92]
             #def get_err(X_test,y_pred, Ene_test):
             print('_'*80)
             #get_err_F(X,y, Ene_test)
-            get_err_F_array(X,y, Ene_test,device='cuda')
+            err = get_err_F_array(X,y, Ene_test,device='cuda')
+            print('err:',err)
         #exit()
-        block_size=1
+        block_size=100
         with Pool(num_threads) as p:
             result = list(tqdm.tqdm(p.imap(generate, range(block_size)), total=block_size))
             #result = p.map(generate,list(range(block_size)))
