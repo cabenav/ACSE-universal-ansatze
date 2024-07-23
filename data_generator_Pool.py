@@ -3,24 +3,24 @@ import numpy as np
 import tqdm
 
 # the function to generate one data entry
-from data_generator_Parameter import generate
+from data_generator_Parameter import generate, get_err_F_array
 
 print('This program run generate() in parallel, and save into data folder incrementally')
 
 ############################# config start #################################
 trials = 10000
-# scipy use defult omp threads=4 for each process. hence the actual cpu being used is num_threads * 4
-num_threads=16
+# scipy use defult omp threads=4 for each process. hence the actual cpu being used is num_threads * 4. total core 86
+num_threads=12  # 86 - 12*4 = 38 # 86-24=62 /4 = 15
 # block to save data
 block_size = num_threads * 200 * 5
 #folder = 'data'
-folder = '/public/home/weileizeng/ansatz-data/p1'
+folder = '/public/home/weileizeng/ansatz-data/parameter'
 #filename_prefix=f'{folder}/m4'
 #filename_prefix=f'{folder}/m6'
 filename_prefix=f'{folder}/p1'
 #filename='tmp.npy'
 # discontribute data into list of files with limited filesize or avoid slow I/O
-filesize_limit = 50 #50 # in Mb
+filesize_limit = 300 #50 # in Mb
 filesize_limit_in_bytes = filesize_limit * 1.0e6 # in bytes
 
 TEST=True
@@ -52,14 +52,15 @@ if __name__=="__main__":
         
         import torch
         device='cuda'
-        row = generate(1)        
-        #print('_'*80)
-        #generate(1)
-        #exit()
-        
-        _data = torch.tensor(row)
-        data=torch.tensor(np.array([_data]))
-        data=data.to(device)
+        if False:
+            row = generate(1)        
+            #print('_'*80)
+            #generate(1)
+            #exit()
+            
+            _data = torch.tensor(row)
+            data=torch.tensor(np.array([_data]))
+            data=data.to(device)
         #verify_data(data)
 
         def error_test(data):
@@ -68,25 +69,25 @@ if __name__=="__main__":
             # metric: energy
 
             d=data
-            X = d[:,:16]
-            y = d[:,76:92]    #parameters
-            y = d[:,40:46]    #parameters #'F': (40, 76)
+            
+            X = d[:,:16]      # f
+            y = d[:,16:80]     # A
             #print(y)
             #exit()
-            Ene_test=d[:,32:36]
+            Ene_test=d[:,88:92]
             #def get_err(X_test,y_pred, Ene_test):
             print('_'*80)
-            get_err_F(X,y, Ene_test)
-            get_err_F_array(X,y, Ene_test)
+            #get_err_F(X,y, Ene_test)
+            get_err_F_array(X,y, Ene_test,device='cuda')
         #exit()
-        block_size=5
+        block_size=1
         with Pool(num_threads) as p:
             result = list(tqdm.tqdm(p.imap(generate, range(block_size)), total=block_size))
             #result = p.map(generate,list(range(block_size)))
             data = np.array(result)
         # program end without saving into file
 
-
+        #print('data:',data)
         error_test(torch.tensor(data,device=device))
         exit()
         
