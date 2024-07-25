@@ -13,7 +13,7 @@ import glob
 from parallel import Parallel # not in use
 
 from data_generator_Parameter import get_err_F_array
-from configurator import print_config
+#from configurator import print_config  #no need to import when the file is executed
 
 ######################### config start ###############################
 hidden_size= 64 * 1 * 1
@@ -262,18 +262,23 @@ def handler(signum, frame):
     while top_frame.f_back:
         #print('getting back')
         top_frame = top_frame.f_back    
-    print_config(top_frame.f_globals,additional_keys=['filelist','LAYERS'])
-    print('finish printing config')
-    signal.default_int_handler(signum,frame) # exit and print trace
-
+    print_config(top_frame.f_globals,additional_keys=additional_keys)
+    #print('finish printing config')
+    #signal.default_int_handler(signum,frame) # exit and print trace
+    exit(1)
 signal.signal(signal.SIGINT, handler)
 
 
-config_keys = [k for k,v in globals().items() if not k.startswith('_') and isinstance(v, (int, float, bool, str)) and k not in ['arg','key','val','attempt']]
-config_keys.extend(['filelist','LAYERS'])
-config = {k: globals()[k] for k in config_keys} # will be useful for logging
+additional_keys=['filelist','LAYERS']
+config_keys, config = print_config(globals(),additional_keys = additional_keys)
+
+#config_keys = [k for k,v in globals().items() if not k.startswith('_') and isinstance(v, (int, float, bool, str)) and k not in ['arg','key','val','attempt']]
+#config_keys.extend(['filelist','LAYERS'])
+#config = {k: globals()[k] for k in config_keys} # will be useful for logging
 import json
-print(json.dumps(config, indent=2))
+#print(json.dumps(config, indent=2))
+
+# verify existing config file or create new one.
 if os.path.exists(filename_config_json):
     print(f'Found existing config file: {filename_config_json}')
     if True:
