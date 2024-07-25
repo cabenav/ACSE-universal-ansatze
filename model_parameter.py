@@ -50,14 +50,14 @@ filename_config_json=f'{result_folder}/{title}-{note}.json'
 #print('input/output files:',filename_prefix,filename_checkpoint,filename_loss)
 
 config_keys = [k for k,v in globals().items() if not k.startswith('_') and isinstance(v, (int, float, bool, str)) and k not in ['arg','key','val','attempt']]
-#config_keys.append('LAYERS')
+config_keys.append('LAYERS')
 config = {k: globals()[k] for k in config_keys} # will be useful for logging
 import json
 print(json.dumps(config, indent=2))
 if os.path.exists(filename_config_json):
     print(f'Found existing config file: {filename_config_json}')
-    
-    with open(filename_config_json, 'r') as f:
+    if False:
+      with open(filename_config_json, 'r') as f:
         # if file already exist, verify the config are the same
         cfg = json.load(f)
         #important_keys =['LAYERS','hidden_size']
@@ -153,7 +153,7 @@ mse = nn.MSELoss()
 def get_loss(y0,y1):
     loss1 = mse(y0,y1)
     loss2 = get_reletive_loss(y0,y1)
-    print(f'loss1 = {loss1} (mse), loss2 = {loss2} (Relative)')
+    #print(f'loss1 = {loss1} (mse), loss2 = {loss2} (Relative)')
     loss = loss1 + loss2
     return loss
 
@@ -227,6 +227,8 @@ y = d[:,16:32]    # Ansatz parameter
 
 # use the last 1000 for evaluation
 eval_size=d.shape[0]//5
+
+
 X_test,y_test = X[-eval_size:],y[-eval_size:] 
 X,y = X[:-eval_size],y[:-eval_size]
 
@@ -240,7 +242,16 @@ print('data shape X Y',X.shape,y.shape)
 print('test shape X Y',X_test.shape,y_test.shape)
 
 
-A_flat_test = d[-eval_size:,16:32]
+A_flat_test = d[-eval_size:,16:32] # used in evaluation only mode
+
+
+if True:
+    # to limit eval size for saving time
+    max_eval_length = 10000
+    X_test = X_test[:max_eval_length]
+    y_test = y_test[:max_eval_length]
+    Ene_test = Ene_test[:max_eval_length]
+    A_flat_test = A_flat_test[:max_eval_length]
 del d # to save some memory
 
 #X_test = X_test.to(device)
@@ -427,8 +438,8 @@ def model_train(model, X_train, y_train, X_val, y_val,best_err=np.inf,best_weigh
             loss = get_loss(y_val,y_pred)
             _loss = loss.detach().cpu().item()
             #err = get_err(X_val, y_pred, Ene_test)
-            #err = get_err_F_array(X_val, y_pred, Ene_test, device=device)
-            err = _loss
+            err = get_err_F_array(X_val, y_pred, Ene_test, device=device)
+            #err = _loss
             if err <  best_err:
                 #best_acc = acc
                 best_err = err
@@ -489,8 +500,9 @@ if os.path.exists(filename_checkpoint):
             y_pred = model(X_test[:batch_size])
             #loss = loss_fn(y_pred,y_test)
             #best_err = get_err_F_array(X_test[:batch_size], y_pred, Ene_test[:batch_size],device=device)
+            _loss = get_loss(y_test[:batch_size],y_pred).detach().cpu().item()            
 
-            _loss = get_reletive_loss(y_test[:batch_size],y_pred).detach().cpu().item()            
+            #_loss = get_reletive_loss(y_test[:batch_size],y_pred).detach().cpu().item()            
             err = _loss
 
             #best_err = get_err(X_test[:batch_size], y_pred, Ene_test[:batch_size])
