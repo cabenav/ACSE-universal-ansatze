@@ -57,7 +57,7 @@ import json
 print(json.dumps(config, indent=2))
 if os.path.exists(filename_config_json):
     print(f'Found existing config file: {filename_config_json}')
-    if False:
+    if True:
       with open(filename_config_json, 'r') as f:
         # if file already exist, verify the config are the same
         cfg = json.load(f)
@@ -65,13 +65,14 @@ if os.path.exists(filename_config_json):
         important_keys =['hidden_size']
         for k in important_keys:
             assert config[k] == cfg[k]
-        for k in config_keys:
+        #for k in config_keys:
+        for k,_ in cfg.items():
             if config[k] != cfg[k]:
                 print(f'{k} changed: {cfg[k]} -> {config[k]}')        
-else:
-    with open(filename_config_json, 'w') as f:
-        json.dump(config, f,indent=2)
-    print(f'config saved into {filename_config_json}')
+
+with open(filename_config_json, 'w') as f:
+    json.dump(config, f,indent=2)
+print(f'config saved/overrided into {filename_config_json}')
 
 #import wandb
 #run = wandb.init(
@@ -519,7 +520,7 @@ if os.path.exists(filename_checkpoint):
             data_err = get_err_F_array(X_test[:batch_size], A_flat_test[:batch_size], Ene_test[:batch_size],device=device)
             print('err on saved data err is:',data_err.item())     
             print('(y_pred - A_flat_test).mean()=', (y_pred - A_flat_test[:batch_size]).mean().item() )         
-             
+
             if evaluation_only:
                 exit()
 else:
