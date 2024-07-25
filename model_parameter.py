@@ -50,30 +50,7 @@ filename_config_json=f'{result_folder}/{title}-{note}.json'
 #print('title/note:',title,note)
 #print('input/output files:',filename_prefix,filename_checkpoint,filename_loss)
 
-config_keys = [k for k,v in globals().items() if not k.startswith('_') and isinstance(v, (int, float, bool, str)) and k not in ['arg','key','val','attempt']]
-config_keys.append('LAYERS')
-config = {k: globals()[k] for k in config_keys} # will be useful for logging
-import json
-print(json.dumps(config, indent=2))
-if os.path.exists(filename_config_json):
-    print(f'Found existing config file: {filename_config_json}')
-    if True:
-      with open(filename_config_json, 'r') as f:
-        # if file already exist, verify the config are the same
-        cfg = json.load(f)
-        #important_keys =['LAYERS','hidden_size']
-        important_keys =['hidden_size']
-        for k in important_keys:
-            assert config[k] == cfg[k]
-        #for k in config_keys:
-        for k,_ in cfg.items():
-            if config[k] != cfg[k]:
-                print(f'Changed config: [{k}]\t  {cfg[k]} \t-> {config[k]}')        
 
-if not evaluation_only:
-    with open(filename_config_json, 'w') as f:
-        json.dump(config, f,indent=2)
-    print(f'config saved/overrided into {filename_config_json}')
 
 #import wandb
 #run = wandb.init(
@@ -215,14 +192,14 @@ def load(filename_prefix): #loadd all files with this filename prefix
     if False:
         verify_data(data)
         exit()
-    return data
+    return data, filelist
 
 
 
 
 # load training data
 print(f'loading data: {filename_prefix}')
-d = load(filename_prefix)
+d, filelist = load(filename_prefix)
 #d = d[:int(1e6)] # maximum 1 million data
 #d = torch.tensor(d,device=device)
 d = torch.tensor(d)
@@ -269,6 +246,35 @@ if True:
     Ene_test = Ene_test[:max_eval_length]
     A_flat_test = A_flat_test[:max_eval_length]
 del d # to save some memory
+
+
+config_keys = [k for k,v in globals().items() if not k.startswith('_') and isinstance(v, (int, float, bool, str)) and k not in ['arg','key','val','attempt']]
+config_keys.extend(['filelist','LAYERS'])
+config = {k: globals()[k] for k in config_keys} # will be useful for logging
+import json
+print(json.dumps(config, indent=2))
+if os.path.exists(filename_config_json):
+    print(f'Found existing config file: {filename_config_json}')
+    if True:
+      with open(filename_config_json, 'r') as f:
+        # if file already exist, verify the config are the same
+        cfg = json.load(f)
+        #important_keys =['LAYERS','hidden_size']
+        important_keys =['hidden_size']
+        for k in important_keys:
+            assert config[k] == cfg[k]
+        #for k in config_keys:
+        for k,_ in cfg.items():
+            if config[k] != cfg[k]:
+                print(f'Changed config: [{k}]\t  {cfg[k]} \t-> {config[k]}')        
+
+if not evaluation_only:
+    with open(filename_config_json, 'w') as f:
+        json.dump(config, f,indent=2)
+    print(f'config saved/overrided into {filename_config_json}')
+
+
+
 
 #X_test = X_test.to(device)
 #y_test = y_test.to(device)
