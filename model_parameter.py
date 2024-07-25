@@ -76,6 +76,11 @@ if device == "cuda":
 print(f"Using {device} device")
 
 
+from datetime import datetime
+#now = datetime.now()
+#python_date = now.strftime("%Y%m%d-%H%M%S")
+python_date = datetime.now().__str__()
+
 
 ##  accuracy: reconstruct energy 
 loss_err = nn.MSELoss()
