@@ -41,7 +41,8 @@ exec(open('configurator.py').read()) # overrides from command line or config fil
 LAYERS= [hidden_size for _ in range(num_hidden_layers+2)]
 LAYERS[0]=16
 LAYERS[-1]=16  # v (76, 108) from 76 to 92 for real part; imag is currently zero
-note=f'{tag}-ReL-Adam{learning_rate}-bs{batch_size}-layers{"_".join( str(_) for _ in LAYERS)}'
+#note=f'{tag}-ReL-Adam{learning_rate}-bs{batch_size}-layers{"_".join( str(_) for _ in LAYERS)}'
+note=f'{tag}-bs{batch_size}-layers{"_".join( str(_) for _ in LAYERS)}'
 filename_prefix=f'{data_folder}/{title}'  #for loading data
 filename_checkpoint=f'{result_folder}/{title}-{note}-check.pt'
 filename_loss=f'{result_folder}/{title}-{note}-loss.pt'
@@ -509,16 +510,17 @@ if os.path.exists(filename_checkpoint):
             print('loaded previous weights with best_acc:',best_err,'loss_list length:',len(loss_list))
             # an estimate on best acc, in fact one can read from data file. best_err = loss_np_array[-1,4]
 
+            
+            print('X_test[:batch_size]:',X_test[:batch_size].shape)
+            print(y_pred.shape)
+            best_err = get_err_F_array(X_test[:batch_size], y_pred, Ene_test[:batch_size],device=device)
+            print('err on predition:',best_err.item())
+            # to verify the program is right
+            data_err = get_err_F_array(X_test[:batch_size], A_flat_test[:batch_size], Ene_test[:batch_size],device=device)
+            print('err on saved data err is:',data_err.item())     
+            print('(y_pred - A_flat_test).mean()=', (y_pred - A_flat_test[:batch_size]).mean().item() )         
+             
             if evaluation_only:
-                print('X_test[:batch_size]:',X_test[:batch_size].shape)
-                print(y_pred.shape)
-                best_err = get_err_F_array(X_test[:batch_size], y_pred, Ene_test[:batch_size],device=device)
-                print('err on predition:',best_err.item())
-                # to verify the program is right
-                data_err = get_err_F_array(X_test[:batch_size], A_flat_test[:batch_size], Ene_test[:batch_size],device=device)
-                print('err on saved data err is:',data_err.item())     
-                print('(y_pred - A_flat_test).mean()=', (y_pred - A_flat_test[:batch_size]).mean().item() )          
-
                 exit()
 else:
     print('did not find previous weights:',filename_checkpoint)
