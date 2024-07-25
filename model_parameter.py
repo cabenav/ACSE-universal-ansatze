@@ -1,13 +1,16 @@
-
+print('''Train the nerual network
+      Input: 16 random numbers f to generate the Hamiltonian
+      Output: 16 ansatz parameters A
+''')
 import copy
 import numpy as np
 import torch.nn as nn
 import torch.optim as optim
 import tqdm
 import torch
-from parallel import Parallel
-
-#from data_generator_Mqubit import get_err_F_array
+import os
+import glob
+from parallel import Parallel # not in use
 
 from data_generator_Parameter import get_err_F_array
 
@@ -16,7 +19,8 @@ hidden_size= 64 * 1 * 1
 num_hidden_layers=8 # 5
 n_epochs = 10000   # number of epochs to run
 batch_size = 16 * 2 * 1  #10  # size of each batch
-learning_rate=0.000001  #default 0.001
+learning_rate=0.0001  #default 0.001
+eps=1e-2   # small eplison in the denominator when calculating relative loss
 #torch.set_printoptions(8)
 torch.set_printoptions(linewidth=120)
 np.set_printoptions(linewidth=120)
@@ -41,13 +45,40 @@ note=f'{tag}-ReL-Adam{learning_rate}-bs{batch_size}-layers{"_".join( str(_) for 
 filename_prefix=f'{data_folder}/{title}'  #for loading data
 filename_checkpoint=f'{result_folder}/{title}-{note}-check.pt'
 filename_loss=f'{result_folder}/{title}-{note}-loss.pt'
+filename_config_json=f'{result_folder}/{title}-{note}.json'
 #print('title/note:',title,note)
 #print('input/output files:',filename_prefix,filename_checkpoint,filename_loss)
 
 config_keys = [k for k,v in globals().items() if not k.startswith('_') and isinstance(v, (int, float, bool, str)) and k not in ['arg','key','val','attempt']]
+#config_keys.append('LAYERS')
 config = {k: globals()[k] for k in config_keys} # will be useful for logging
 import json
 print(json.dumps(config, indent=2))
+if os.path.exists(filename_config_json):
+    print(f'Found existing config file: {filename_config_json}')
+    
+    with open(filename_config_json, 'r') as f:
+        # if file already exist, verify the config are the same
+        cfg = json.load(f)
+        #important_keys =['LAYERS','hidden_size']
+        important_keys =['hidden_size']
+        for k in important_keys:
+            assert config[k] == cfg[k]
+        for k in config_keys:
+            if config[k] != cfg[k]:
+                print(f'{k} changed: {cfg[k]} -> {config[k]}')        
+else:
+    with open(filename_config_json, 'w') as f:
+        json.dump(config, f,indent=2)
+    print(f'config saved into {filename_config_json}')
+
+#import wandb
+#run = wandb.init(
+#    # Set the project where this run will be logged
+#    project="ACSE-universal-ansatz",
+#    # Track hyperparameters and run metadata
+#    config=config,
+#)
 
 # Get cpu, gpu or mps device for training.
 device = (
@@ -118,15 +149,35 @@ def verify_data(d):
     #err = get_err(X_val, y_pred, Ene_test)
     print(err)
 
+mse = nn.MSELoss()
+def get_loss(y0,y1):
+    loss1 = mse(y0,y1)
+    loss2 = get_reletive_loss(y0,y1)
+    print(f'loss1 = {loss1} (mse), loss2 = {loss2} (Relative)')
+    loss = loss1 + loss2
+    return loss
 
 # return relative loss between two data sets
-eps=1e-5
+# this enlarge effect on small values
+# but fail when predition has a minus sign, which yields 1 always
 def get_reletive_loss(y0,y1):
-    r=(y1-y0).abs() / (y0.abs() + eps)    
+    r=(y1-y0).abs() / (y0.abs() + y1.abs() + eps)
+    # check maximum of r
+    if False:
+        print('r',r)
+        print('r',r>0.5)
+        print('r',((r>0.5)*1.0).mean())
+        index = torch.argmax(r)
+        i,j = index//16, index % 16
+        print('index,i,j',index,i,j)
+        print(f'find max r[{index}] ={r[i][j]}, with {y0[i][j]}, {y1[i][j]} ')
+    #result = torch.max(r)
+    #print(result)
+#    print(v,index)
+
     return r.mean()
     
-import os
-import glob
+
 def load(filename_prefix): #loadd all files with this filename prefix
     filelist = glob.glob(f'{filename_prefix}*.npy')
     filelist.sort() #ensure the same validation data is used everytime
@@ -188,6 +239,8 @@ print(type(X),X.dtype)
 print('data shape X Y',X.shape,y.shape)
 print('test shape X Y',X_test.shape,y_test.shape)
 
+
+A_flat_test = d[-eval_size:,16:32]
 del d # to save some memory
 
 #X_test = X_test.to(device)
@@ -331,7 +384,8 @@ def model_train(model, X_train, y_train, X_val, y_val,best_err=np.inf,best_weigh
                 y_pred = model(X_batch)
                 #print(y_pred.shape,y_batch.shape)
                 #loss = loss_fn(y_pred, y_batch)
-                loss = get_reletive_loss(y_batch,y_pred)
+                #loss = get_reletive_loss(y_batch,y_pred)
+                loss = get_loss(y_batch,y_pred)
                     
                 # backward pass
                 optimizer.zero_grad()
@@ -369,7 +423,8 @@ def model_train(model, X_train, y_train, X_val, y_val,best_err=np.inf,best_weigh
                 y_pred = torch.cat(ys)                                    
             #y_pred = model(X_val)
             #loss = loss_fn(y_pred,y_val)
-            loss = get_reletive_loss(y_val,y_pred)
+            #loss = get_reletive_loss(y_val,y_pred)
+            loss = get_loss(y_val,y_pred)
             _loss = loss.detach().cpu().item()
             #err = get_err(X_val, y_pred, Ene_test)
             #err = get_err_F_array(X_val, y_pred, Ene_test, device=device)
@@ -381,6 +436,7 @@ def model_train(model, X_train, y_train, X_val, y_val,best_err=np.inf,best_weigh
                 torch.save(best_weights,filename_checkpoint)
                 print(f'best weights saved into {filename_checkpoint} at epoch={epoch}, err={err}, loss={loss}')            
         #print(loss_list)
+        #wandb.log(dict(validation_loss=_loss,training_loss=training_loss, error=err, best_error=best_err, epoch=epoch))
         loss_list.append( (_loss,training_loss, err, best_err, epoch) )
         loss_np_array = np.array(loss_list)
         print('  |  validation  |  training  |    err     |   best_err   |   epoch   |  - history -')
@@ -412,7 +468,7 @@ best_err =  np.inf   # init to negative infinity
 best_weights = None
 
 # loss function and optimizer
-loss_fn = nn.MSELoss()
+#loss_fn = nn.MSELoss()
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 #optimizer = optim.SGD(model.parameters(), lr=learning_rate)
 
@@ -442,7 +498,15 @@ if os.path.exists(filename_checkpoint):
             # an estimate on best acc, in fact one can read from data file. best_err = loss_np_array[-1,4]
 
             if evaluation_only:
+                print('X_test[:batch_size]:',X_test[:batch_size].shape)
+                print(y_pred.shape)
                 best_err = get_err_F_array(X_test[:batch_size], y_pred, Ene_test[:batch_size],device=device)
+                print('err on predition:',best_err.item())
+                # to verify the program is right
+                data_err = get_err_F_array(X_test[:batch_size], A_flat_test[:batch_size], Ene_test[:batch_size],device=device)
+                print('err on saved data err is:',data_err.item())     
+                print('(y_pred - A_flat_test).mean()=', (y_pred - A_flat_test[:batch_size]).mean().item() )          
+
                 exit()
 else:
     print('did not find previous weights:',filename_checkpoint)
