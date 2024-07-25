@@ -42,7 +42,7 @@ LAYERS= [hidden_size for _ in range(num_hidden_layers+2)]
 LAYERS[0]=16
 LAYERS[-1]=16  # v (76, 108) from 76 to 92 for real part; imag is currently zero
 #note=f'{tag}-ReL-Adam{learning_rate}-bs{batch_size}-layers{"_".join( str(_) for _ in LAYERS)}'
-note=f'{tag}-bs{batch_size}-layers{"_".join( str(_) for _ in LAYERS)}'
+note=f'{tag}'
 filename_prefix=f'{data_folder}/{title}'  #for loading data
 filename_checkpoint=f'{result_folder}/{title}-{note}-check.pt'
 filename_loss=f'{result_folder}/{title}-{note}-loss.pt'
@@ -68,11 +68,12 @@ if os.path.exists(filename_config_json):
         #for k in config_keys:
         for k,_ in cfg.items():
             if config[k] != cfg[k]:
-                print(f'{k} changed: {cfg[k]} -> {config[k]}')        
+                print(f'Changed config: [{k}]\t  {cfg[k]} \t-> {config[k]}')        
 
-with open(filename_config_json, 'w') as f:
-    json.dump(config, f,indent=2)
-print(f'config saved/overrided into {filename_config_json}')
+if not evaluation_only:
+    with open(filename_config_json, 'w') as f:
+        json.dump(config, f,indent=2)
+    print(f'config saved/overrided into {filename_config_json}')
 
 #import wandb
 #run = wandb.init(
@@ -152,27 +153,40 @@ def verify_data(d):
     print(err)
 
 mse = nn.MSELoss()
-def get_loss(y0,y1):
+def get_loss(y0,y1,debug=False):
     loss1 = mse(y0,y1)
-    loss2 = get_reletive_loss(y0,y1)
+    loss2 = get_relative_loss(y0,y1,debug=debug)
     #print(f'loss1 = {loss1} (mse), loss2 = {loss2} (Relative)')
-    loss = loss1 + loss2
+    gamma = 0.1
+    loss = (loss1 + loss2 * gamma )/(1+gamma)
+    if debug:
+        print('losses:')
+        print(loss1)
+        print(loss2)
     return loss
 
 # return relative loss between two data sets
 # this enlarge effect on small values
 # but fail when predition has a minus sign, which yields 1 always
-def get_reletive_loss(y0,y1):
+def get_relative_loss(y0,y1,debug=False):
     r=(y1-y0).abs() / (y0.abs() + y1.abs() + eps)
     # check maximum of r
-    if False:
-        print('r',r)
-        print('r',r>0.5)
-        print('r',((r>0.5)*1.0).mean())
+    if debug:
+        #print('r',r)
+        #print('r',r>0.5)
+        #print('r',((r>0.5)*1.0).mean())
         index = torch.argmax(r)
         i,j = index//16, index % 16
         print('index,i,j',index,i,j)
         print(f'find max r[{index}] ={r[i][j]}, with {y0[i][j]}, {y1[i][j]} ')
+
+        diff=mse(y0[i][j], y1[i][j] )
+        print('mse(y0[i][j], y1[i][j] )=',diff)
+        print('mse(y0[i], y1[i] )=',mse(y0[i], y1[i] ))
+        print('mse(y0,y1)=',mse(y0,y1))
+        print(y0.shape)
+        print(y0[i])
+        print(y1[i])
     #result = torch.max(r)
     #print(result)
 #    print(v,index)
@@ -185,7 +199,7 @@ def load(filename_prefix): #loadd all files with this filename prefix
     filelist.sort() #ensure the same validation data is used everytime
     if data_file_limit > 0 :
         filelist = filelist[:data_file_limit]
-    print('get file list (max 80)',filelist)
+    #print('get file list (max 80)',filelist)
     print(f'loading {len(filelist)} data files...')
     data_list=[]
     for filename in filelist:
@@ -437,7 +451,7 @@ def model_train(model, X_train, y_train, X_val, y_val,best_err=np.inf,best_weigh
             #y_pred = model(X_val)
             #loss = loss_fn(y_pred,y_val)
             #loss = get_reletive_loss(y_val,y_pred)
-            loss = get_loss(y_val,y_pred)
+            loss = get_loss(y_val,y_pred,debug=True)
             _loss = loss.detach().cpu().item()
             #err = get_err(X_val, y_pred, Ene_test)
             err = get_err_F_array(X_val, y_pred, Ene_test, device=device)
@@ -502,7 +516,7 @@ if os.path.exists(filename_checkpoint):
             y_pred = model(X_test[:batch_size])
             #loss = loss_fn(y_pred,y_test)
             #best_err = get_err_F_array(X_test[:batch_size], y_pred, Ene_test[:batch_size],device=device)
-            _loss = get_loss(y_test[:batch_size],y_pred).detach().cpu().item()            
+            _loss = get_loss(y_test[:batch_size],y_pred, debug=True).detach().cpu().item()            
 
             #_loss = get_reletive_loss(y_test[:batch_size],y_pred).detach().cpu().item()            
             err = _loss
