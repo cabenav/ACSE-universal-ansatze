@@ -80,7 +80,8 @@ def get_err_F_array(f_flat,A_flat, Ene_test, device='cpu'):
     e1=torch.min(Ene.real,dim=1).values
     #print(e0)
     #print(e1)
-    print('e0-e1 < eps:',(e0-e1).abs()< (eps:=1e-10))
+    #print('e0-e1 < eps:', ((e0-e1).abs() < (eps:=1e-10)))
+    print('e0-e1 .mean()', (e0-e1).abs().mean() )
     err = loss_err(e0,e1)
     
     return err.detach().cpu()
