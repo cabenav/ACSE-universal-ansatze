@@ -14,16 +14,18 @@ num_threads=12  # 86 - 12*4 = 38 # 86-24=62 /4 = 15
 # block to save data
 block_size = num_threads * 200 * 5
 #folder = 'data'
-folder = '/public/home/weileizeng/ansatz-data/parameter'
+#folder = '/public/home/weileizeng/ansatz-data/parameter'
+folder = '/public/home/weileizeng/ansatz-data/p2'
 #filename_prefix=f'{folder}/m4'
 #filename_prefix=f'{folder}/m6'
-filename_prefix=f'{folder}/p1'
+#filename_prefix=f'{folder}/p1'
+filename_prefix=f'{folder}/p2'
 #filename='tmp.npy'
 # discontribute data into list of files with limited filesize or avoid slow I/O
 filesize_limit = 300 #50 # in Mb
 filesize_limit_in_bytes = filesize_limit * 1.0e6 # in bytes
 
-TEST=True
+TEST=False
 ############################# config end  #################################
 from configurator import print_config
 print_config(globals())
