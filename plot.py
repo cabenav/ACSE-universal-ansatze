@@ -1,12 +1,16 @@
 import numpy as np
 import matplotlib.pyplot as plt
-
+import json
+import os
 ######################### config #######################3
 result_folder='checkpoints'
 filename='m4-float32-batchsize2048-layers16_512_512_512_512_512_10-loss.pt'
 #filename='m4-float32-batchsize512-layers16_512_512_512_512_512_10-loss.pt'
 #filename='m4-float32-batchsize1024-layers16_512_512_512_512_512_10-loss.pt'
 filename_loss=f'{result_folder}/{filename}'
+fig_folder='fig'
+
+
 
 import sys
 #print ('argument list', sys.argv)
@@ -17,13 +21,25 @@ try:
 except:
     print('no input loss file from cmd')
 
-fig_folder='fig'
+
 filename_fig =f'{fig_folder}/{filename}.pdf'
-    
+filename_config_json = filename_loss[:-8] +'.json'
+
+if os.path.exists(filename_config_json):
+
+    with open(filename_config_json,'r') as f:
+        cfg = json.load(f)
+        try:
+            title = f"file: {filename}\nlayers: {cfg['LAYERS']}\nbatch_size={cfg['batch_size']}, learning rate={cfg['learning_rate']}, gpu={cfg['gpu']}"
+        except:
+            title = f"file: {filename}\nbatch_size={cfg['batch_size']}, learning rate={cfg['learning_rate']}, gpu={cfg['gpu']}"
+else:
+    title=filename
+
 # print local variables
 local=locals().copy()
 for k in local:
-    if k[0:2] != '__':      #skip built in module
+    if k[0:2] != '__':      #skip built-in modules
         print(f'{k}:\t{local[k]}')
 
 
@@ -57,15 +73,22 @@ if data.shape[1] == 2:
 elif data.shape[1] == 5:
     #print(data)
     if True:
-        data[:,2:4] = data[:,2:4]/100
-        labels= ['validation loss','training loss','err/100','best err/100', 'epoch']
+        #data[:,2:4] = data[:,2:4]/10
+        labels= ['validation loss on Ansatz parameter','training loss on Ansatz paramter','MSE error on energy.min()','best error', 'epoch']
     plt.plot(data[:,:4], label=labels[:4])
+    for i in [0,3]:
+        # display value of the last point
+        x=data.shape[0]
+        y=data[-1,i]
+        #print( filename_fig,'xy',x,y)
+        plt.annotate(f'({y:.2f})', (x, y), ha='center',va='top')
     #plt.plot(data[:,:4], label=['validation loss','training loss','acc','best acc'])
 else:
     plt.plot(data, label='validation loss')
 #plt.ylim(0.001, 0.9)
 #plt.tight_layout()
-plt.title(filename)
+#plt.title(filename)
+plt.title(title,loc='left')
 plt.ylabel("Loss /log")
 #plt.xlabel(f"Epoches x {scale}")
 plt.xlabel(f"Epoches")
