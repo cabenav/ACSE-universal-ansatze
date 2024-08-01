@@ -9,9 +9,6 @@ from scipy.optimize import minimize
 import matplotlib.pyplot as plt
 import tqdm
 
-
-
-
 def v2Ene(Ham,v):
     '''calculate energy from v and Ham
     '''
@@ -29,7 +26,7 @@ def flat_v2Ene(Ham_flat,v_flat):
     v = v_flat.reshape((num,4,4))
     return v2Ene(Ham,v)
     
-##  accuracy: reconstruct energy and calculate the absolute error
+##  accuracy: reconstruct energy and calculate its diviation from saved data
 # this function is used to verified data. not used in data generation
 def get_err(X_test,y_pred, Ene_test):
     '''input: X for Ham, y for v
@@ -188,7 +185,24 @@ def get_err_F_array(Ham_flat,F, Ene_test, device='cpu'):
     #print('Ene_test',Ene_test)
     #print('Ene_diff',Ene_test-Ene.real)
     #print('Ene_diff',(Ene_test-Ene.real) <0.001)
-    err = loss_err(Ene_test,Ene.real)
+
+    # compare all four terms
+    # err = loss_err(Ene_test,Ene.real)
+    # compare only the ground state energy
+    #print((Ene_test.min(dim=1)).shape)
+    #print((Ene.real.min(dim=1)).shape)
+    e0=torch.min(Ene_test,dim=1).values
+    e1=torch.min(Ene.real,dim=1).values
+    print(e0)
+    print(e1)
+    err = loss_err(e0,e1)
+
+    # compute average of Ene_pred
+    Ene_pred_abs_mean = Ene.real.sum(dim=1).abs().mean().item()
+    print(f'Ene_pred_abs_mean  = {Ene_pred_abs_mean}')
+    Ene_pred_abs_mean2 = Ene.real.abs().mean().item()
+    print(f'Ene_pred_abs_mean2 = {Ene_pred_abs_mean2}')
+    
     return err.detach().cpu()
 
 
