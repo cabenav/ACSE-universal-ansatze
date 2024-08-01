@@ -69,9 +69,10 @@ def get_err(X_test,y_pred, Ene_test):
     Ham = X_test.reshape((num,4,4))
     v = y_pred.reshape((num,4,4))
     #print(torch.einsum('ij,j->i',AA , ve1)) # original Ham @ v, not in tensor/in parallel
-    #Ene_pred =  torch.vdot(v, Ham @ v)
+    #Ene_pred =  torch.vdot(v, Ham @ v)   #for single entry n=1
     Ham_v = torch.einsum('nij, nvj->nvi', Ham , v)  #Ham @ v for n in parallel
     Ene_pred =  torch.linalg.vecdot(v, Ham_v)       # vdot for n in parallel
+
     
     e0=Ene_test.sum(dim=1)
     e1=Ene_pred.sum(dim=1)
