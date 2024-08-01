@@ -10,7 +10,7 @@ import tqdm
 import torch
 import os
 import glob
-from parallel import Parallel # not in use
+from parallel import Parallel 
 
 from data_generator_Parameter import get_err_F_array
 #from configurator import print_config  #no need to import when the file is executed
@@ -371,16 +371,24 @@ class Deep(nn.Module):
         #self.l3=nn.Linear(64,layers[-1])
 
 
-        #def residual
-
+        # def conv2d block
+        def get_conv2d(out_size):
+            c=16
+            return Parallel(
+                nn.Sequential(nn.Flatten(),nn.Linear(4*4,out_size)),                
+                nn.Sequential(nn.Conv2d(1,c,2),nn.Flatten(),nn.Linear(c*3*3,out_size)),
+                nn.Sequential(nn.Conv2d(1,c,3),nn.Flatten(),nn.Linear(c*2*2,out_size)),
+                merge='sum'
+            )             
+            
         def get_blocks():
             blocks=[]
-            blocks.append(nn.Linear(layers[0],layers[1]))
+            #blocks.append(nn.Linear(layers[0],layers[1]))
             num_layers=len(layers)
             # [2,8,8,8,2]
             for i in range(1,num_layers-2):
                 _block=[]
-                layer0,layer1 = layers[i:i+2]
+                layer0,layer1 = layers[i:i+2] # the i th and i+1 th elements
                 _block.append(nn.Tanh())
                 _block.append(nn.Linear(layer0,layer1))
                 block=ResBlock(nn.Sequential(*_block))
@@ -389,30 +397,20 @@ class Deep(nn.Module):
             blocks.append(nn.Linear(layers[-2],layers[-1]))
             #one can add extra linear layer to propogate the residual
             return blocks
-        self.blocks= nn.Sequential(*get_blocks())
-
         
-        #self.linear_relu_stack = nn.Sequential(*modules)
-        #parallel doesn't improve with identical components, skip it
-        #self.parallel=Parallel(nn.Sequential(*get_modules()), nn.Sequential(*get_modules()),)
-        #self.sigmoid = nn.Sigmoid()
-        #self.output = nn.Linear(layers[-2], layers[-1])
+
+        self.conv2d = get_conv2d(layers[1])
+        
+        self.blocks= nn.Sequential(*get_blocks())
+        
         
     def forward(self, x):
+        #x = self.blocks(x)
 
-        #print(x.shape)
+        x = x.reshape(-1,1,4,4)
+        x = self.conv2d(x)
         x = self.blocks(x)
-        #print(x.shape)
-        #x=self.l1(x)
-        #x , hidden = self.l2(x,hidden)
-        #print(x)
-        #print(hidden)
-        #x = self.l3(x)        
-        #return x,hidden
-        #x = self.linear_relu_stack(x)
-        #x = self.parallel(x)
-        #x = self.sigmoid(x)
-        #x = self.output(x)
+        
         return x
 
 
