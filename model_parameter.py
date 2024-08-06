@@ -383,7 +383,7 @@ class Deep(nn.Module):
             
         def get_blocks():
             blocks=[]
-            #blocks.append(nn.Linear(layers[0],layers[1]))
+            blocks.append(nn.Linear(layers[0],layers[1]))
             num_layers=len(layers)
             # [2,8,8,8,2]
             for i in range(1,num_layers-2):
@@ -399,7 +399,7 @@ class Deep(nn.Module):
             return blocks
         
 
-        self.conv2d = get_conv2d(layers[1])
+        #self.conv2d = get_conv2d(layers[1])
         
         self.blocks= nn.Sequential(*get_blocks())
         
@@ -407,8 +407,8 @@ class Deep(nn.Module):
     def forward(self, x):
         #x = self.blocks(x)
 
-        x = x.reshape(-1,1,4,4)
-        x = self.conv2d(x)
+        #x = x.reshape(-1,1,4,4)
+        #x = self.conv2d(x)
         x = self.blocks(x)
         
         return x
