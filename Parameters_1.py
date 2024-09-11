@@ -100,7 +100,7 @@ plt.xlabel('A_11')
 plt.ylabel('Ansatz param')
 plt.show()
 
-plt.plot(B[:].real, label='HS')
+plt.plot(xaxis,B[:].real, label='HS')
 plt.xlabel('A_11')
 plt.ylabel('Frobenius norm of A')
 plt.show()
