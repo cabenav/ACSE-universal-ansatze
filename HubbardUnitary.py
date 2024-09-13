@@ -71,27 +71,6 @@ class function():
    def evalua(self,seed):
       matriz = Unit(seed,Hamil)
       return (np.matmul(np.matmul(np.conj(self.vecL),matriz),self.vecL)).real
-   
-def UnitH(params,Hamil):
-   x = params
-   Unitary = Unit2H(params)
-   Unitarydag = np.conj(np.transpose(Unitary))
-   return np.matmul(np.matmul(Unitarydag,Hamil),Unitary)
-   
-def Unit2H(params):
-   x = params
-   Full = sum(np.multiply(Op1[k]+np.transpose(Op1[k]),x[k])  for k in range(L))+sum(np.multiply(np.matmul(Op2[k], Op2[sig(k)]),x[k+L])  for k in range(L))
-   return linalg.expm(Full)
-   
-   
-class function2():
-   def __init__(self,Hamil,vecL):
-      self.Hamil = Hamil
-      self.vecL = vecL
-   def evalua(self,seed):
-      matriz = UnitH(seed,Hamil)
-      vec2 = Unit2H(seed) @ self.vecL
-      return (np.matmul(np.matmul(np.conj(self.vecL),matriz),self.vecL)/(np.conj(vec2) @ vec2)).real
     
 
 #NUMBER OF SITES, WEIGHTS and TROTTER STEPS:
@@ -158,28 +137,23 @@ plt.show()
 #QUANTUM ALGORITHM: here starts the quantum calculation
 
 eigennum = np.zeros((trotter,Range+1))
+eigenor= np.zeros((trotter,Range+1))
+eigennumor = np.zeros((trotter,Range+1))
+
 
 seed=np.zeros((trotter,Range+1,3*L))
-seedH=np.zeros((trotter,Range+1,2*L))
 state = np.zeros((Range+1,dimH),dtype=complex)
 for u in range(Range+1):
    state[u,0] =1
-state1 = np.zeros((Range+1,dimH),dtype=complex)
-for u in range(Range+1):
-   state1[u,0] =1
 
 for nn in range(trotter):
    for u in range(Range+1):
       print("I am computing for the coupling: ", u, "  and the iteration: ", nn)
       Hamil=Ham(Ham1,Ham2,u)
-      #res = minimize(function(Hamil,state[u]).evalua,seed[ant(nn),u])
-      #seed[nn,u] = res.x
-      #state[u] = Unit2(seed[nn,u]) @ state[u]
-      #state[u] = state[u]/np.sqrt((np.conj(state[u]) @ state[u]).real)
-      #eigennum[nn,u] = np.matmul(np.matmul(np.conj(state[u]),Hamil),state[u])
-      res = minimize(function2(Hamil,state[u]).evalua,seedH[ant(nn),u])
-      seedH[nn,u] = res.x
-      state[u] = Unit2H(seedH[nn,u]) @ state[u]
+      #seed[nn,u] = optimize.fmin(fun.evalua,seed[ant(nn),u],maxfun=800000,maxiter=800000,ftol=1e-6,xtol=1e-6)
+      res = minimize(function(Hamil,state[u]).evalua,seed[ant(nn),u])
+      seed[nn,u] = res.x
+      state[u] = Unit2(seed[nn,u]) @ state[u]
       state[u] = state[u]/np.sqrt((np.conj(state[u]) @ state[u]).real)
       eigennum[nn,u] = np.matmul(np.matmul(np.conj(state[u]),Hamil),state[u])
    plt.rc('axes', labelsize=15)
@@ -190,8 +164,6 @@ plt.legend(prop={"size":15},loc='upper left')
 plt.xlabel("$U/t$")
 plt.show()
 
-#pickle.dump(eigen, open( "list3.p", "wb" ) )
-#pickle.dump(eigennum, open( "list4.p", "wb" ) )
 
 
 
