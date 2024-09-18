@@ -130,13 +130,14 @@ for j in range(L):
 
 Ham1 =-sum(Op1[k] + np.transpose(Op1[k]) for k in range(L))
 Ham2 = sum(np.matmul(Op2[k], Op2[sig(k)]) for k in range(L))
-Range = 20
-FI1 =[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]
+#Range = 20
+#FI1 =[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]
 #Range = 20
 #FI1 =[-10,-9,-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9,10]
 
-#Range = 10
-#FI1 =[0,1,2,3,4,5,6,7,8,9,10]
+Range = 10
+FI1 =[0,1,2,3,4,5,6,7,8,9,10]
+FI1b =[0,0.5,1,1.5,2,2.5,3,3.5,4,4.5,5]
 
 eigen = [] 
 for u in range(0,Range+1):
@@ -146,11 +147,11 @@ for u in range(0,Range+1):
    eigen[u].sort()
 eigen=np.array(eigen)
 
-for i in range(dimH):
-   plt.plot(FI1,np.transpose(eigen)[i],'r-', mfc='none',lw=1)
-plt.rc('axes', labelsize=15)
-plt.rc('font', size=15)  
-plt.show()
+#for i in range(dimH):
+#   plt.plot(FI1,np.transpose(eigen)[i],'r-', mfc='none',lw=1)
+#plt.rc('axes', labelsize=15)
+#plt.rc('font', size=15)  
+#plt.show()
 
 #xnew = np.linspace(0, 10, 300) 
 #for i in range(dimH):
@@ -179,6 +180,11 @@ state1 = np.zeros((Range+1,dimH),dtype=complex)
 for u in range(Range+1):
    state1[u,0] =1
 
+
+instate = np.zeros(2*L)
+for i in range(L):
+   instate[i] = 1
+
 for nn in range(trotter):
    for u in range(Range+1):
       #print("I am computing for the coupling: ", u, "  and the iteration: ", nn)
@@ -197,8 +203,8 @@ for nn in range(trotter):
       #state[u] = state[u]/np.sqrt((np.conj(state[u]) @ state[u]).real)
       #eigennum[nn,u] = np.matmul(np.matmul(np.conj(state[u]),Hamil),state[u])
    plt.rc('axes', labelsize=15)
-   plt.rc('font', size=15)  
-   plt.plot(FI1, (eigennumH[nn]-eigen[:,0])/eigen[:,0]*100, label=f"HCQE {nn}")
+   plt.rc('font', size=15)
+   plt.plot(FI1b, (eigennumH[nn]-eigen[:,0])/eigen[:,0]*100, label=f"HCQE {nn}")
    #plt.plot(FI1, (eigennum[nn]-eigen[:,0])/eigen[:,0]*100, label='ACQE')
    #plt.plot(FI1, eigennumH[nn], label='HCQE')
    #plt.plot(FI1, eigennum[nn], label='CQE')
@@ -208,6 +214,14 @@ plt.title("Error of the energy %")
 plt.xlabel("$U/t$")
 plt.show()
 
+
+for u in range(Range+1):
+   for i in range(L):
+      instate[L+i] = u/2
+   print("input Hamiltonian parameters", instate)
+   for nn in range(trotter):
+      print("output ansatz", nn, ":", seedH[nn,u])
+   print("ground-state energy", eigennumH[nn,u])
 
 plt.rc('axes', labelsize=15)
 plt.rc('font', size=15)
@@ -236,4 +250,4 @@ plt.show()
 #pickle.dump(eigennum, open( "list4.p", "wb" ) )
 
 
-
+#print inout, outpout and gs energy
