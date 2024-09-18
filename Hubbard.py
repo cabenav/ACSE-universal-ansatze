@@ -239,13 +239,13 @@ plt.legend(prop={"size":15},loc='upper left')
 plt.xlabel("$U/t$")
 plt.show()
 
-plt.rc('axes', labelsize=15)
-plt.rc('font', size=15)  
-for nn in range(trotter):
-   plt.plot(FI1, frobenius[nn], label='CQE')
-plt.legend(prop={"size":15},loc='upper left')
-plt.xlabel("$U/t$")
-plt.show()
+#plt.rc('axes', labelsize=15)
+#plt.rc('font', size=15)  
+#for nn in range(trotter):
+#   plt.plot(FI1, frobenius[nn], label='CQE')
+#plt.legend(prop={"size":15},loc='upper left')
+#plt.xlabel("$U/t$")
+#plt.show()
 #pickle.dump(eigen, open( "list3.p", "wb" ) )
 #pickle.dump(eigennum, open( "list4.p", "wb" ) )
 
