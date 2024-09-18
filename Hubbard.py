@@ -30,7 +30,7 @@ def vecf(w,res1):
       vecprov.append(cont)
    return vecprov  
 
-def chop(expr, delta=10**-10):
+def chop(expr, delta=10**-6):
    return np.ma.masked_inside(expr, -delta, delta).filled(0).real
 
 def sig(j):
@@ -48,8 +48,10 @@ def sig2(j):
 def ant(j):
    if j == 0:   
       return 0
+   elif j == 1:   
+      return 0
    else:
-      return j-1
+      return j-2
       
 #CONSTRUCTION OF UNITARIES
 def Unit(params,Hamil):
@@ -130,10 +132,15 @@ Ham1 =-sum(Op1[k] + np.transpose(Op1[k]) for k in range(L))
 Ham2 = sum(np.matmul(Op2[k], Op2[sig(k)]) for k in range(L))
 Range = 20
 FI1 =[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]
+#Range = 20
+#FI1 =[-10,-9,-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9,10]
+
+#Range = 10
+#FI1 =[0,1,2,3,4,5,6,7,8,9,10]
 
 eigen = [] 
 for u in range(0,Range+1):
-   v1, v2 = LA.eig(Ham(Ham1,Ham2,u))
+   v1, v2 = LA.eig(Ham(Ham1,Ham2,u/2))
    eigen.append(v1)
    eigen[u].real
    eigen[u].sort()
@@ -158,9 +165,13 @@ plt.show()
 #QUANTUM ALGORITHM: here starts the quantum calculation
 
 eigennum = np.zeros((trotter,Range+1))
+eigennumH = np.zeros((trotter,Range+1))
 
 seed=np.zeros((trotter,Range+1,3*L))
 seedH=np.zeros((trotter,Range+1,2*L))
+frobenius = np.zeros((trotter,Range+1))
+frobeniusH = np.zeros((trotter,Range+1))
+
 state = np.zeros((Range+1,dimH),dtype=complex)
 for u in range(Range+1):
    state[u,0] =1
@@ -170,26 +181,57 @@ for u in range(Range+1):
 
 for nn in range(trotter):
    for u in range(Range+1):
-      print("I am computing for the coupling: ", u, "  and the iteration: ", nn)
-      Hamil=Ham(Ham1,Ham2,u)
-      #res = minimize(function(Hamil,state[u]).evalua,seed[ant(nn),u])
+      #print("I am computing for the coupling: ", u, "  and the iteration: ", nn)
+      Hamil=Ham(Ham1,Ham2,u/2)
+      res = minimize(function2(Hamil-np.identity(dimH)*eigen[u,0],state[u]).evalua,seedH[nn,u],method='L-BFGS-B')
+      seedH[nn,u] = res.x
+      #seedH[nn,u] = [1,1,1,1,1,u,u,u,u,u]
+      frobeniusH[nn,u] = seedH[nn,u] @ seedH[nn,u]/L
+      state[u] = Unit2H(seedH[nn,u]) @ state[u]
+      state[u] = state[u]/np.sqrt((np.conj(state[u]) @ state[u]).real)
+      eigennumH[nn,u] = np.matmul(np.matmul(np.conj(state[u]),Hamil),state[u])
+      #res = minimize(function(Hamil,state[u]).evalua,seed[nn,u],method='L-BFGS-B')
       #seed[nn,u] = res.x
+      #frobenius[nn,u] = seed[nn,u] @ seed[nn,u]
       #state[u] = Unit2(seed[nn,u]) @ state[u]
       #state[u] = state[u]/np.sqrt((np.conj(state[u]) @ state[u]).real)
       #eigennum[nn,u] = np.matmul(np.matmul(np.conj(state[u]),Hamil),state[u])
-      res = minimize(function2(Hamil,state[u]).evalua,seedH[ant(nn),u])
-      seedH[nn,u] = res.x
-      state[u] = Unit2H(seedH[nn,u]) @ state[u]
-      state[u] = state[u]/np.sqrt((np.conj(state[u]) @ state[u]).real)
-      eigennum[nn,u] = np.matmul(np.matmul(np.conj(state[u]),Hamil),state[u])
    plt.rc('axes', labelsize=15)
    plt.rc('font', size=15)  
-   plt.plot(FI1, eigennum[nn], label='CQE')
-plt.plot(FI1, eigen[:,0],'bo', mfc='none',label='exact')
+   plt.plot(FI1, (eigennumH[nn]-eigen[:,0])/eigen[:,0]*100, label=f"HCQE {nn}")
+   #plt.plot(FI1, (eigennum[nn]-eigen[:,0])/eigen[:,0]*100, label='ACQE')
+   #plt.plot(FI1, eigennumH[nn], label='HCQE')
+   #plt.plot(FI1, eigennum[nn], label='CQE')
+#plt.plot(FI1, eigen[:,0],'bo', mfc='none',label='exact')
+plt.legend(prop={"size":15},loc='upper left')
+plt.title("Error of the energy %")
+plt.xlabel("$U/t$")
+plt.show()
+
+
+plt.rc('axes', labelsize=15)
+plt.rc('font', size=15)
+plt.title("Frobenius norm")
+plt.plot(FI1, frobeniusH[0], label='HCQE 0')
 plt.legend(prop={"size":15},loc='upper left')
 plt.xlabel("$U/t$")
 plt.show()
 
+plt.rc('axes', labelsize=15)
+plt.rc('font', size=15)  
+for nn in range(1,trotter):
+   plt.plot(FI1, frobeniusH[nn], label=f"HCQE {nn}")
+plt.legend(prop={"size":15},loc='upper left')
+plt.xlabel("$U/t$")
+plt.show()
+
+plt.rc('axes', labelsize=15)
+plt.rc('font', size=15)  
+for nn in range(trotter):
+   plt.plot(FI1, frobenius[nn], label='CQE')
+plt.legend(prop={"size":15},loc='upper left')
+plt.xlabel("$U/t$")
+plt.show()
 #pickle.dump(eigen, open( "list3.p", "wb" ) )
 #pickle.dump(eigennum, open( "list4.p", "wb" ) )
 
