@@ -151,7 +151,8 @@ for nn in range(trotter):
       print("I am computing for the coupling: ", u, "  and the iteration: ", nn)
       Hamil=Ham(Ham1,Ham2,u)
       #seed[nn,u] = optimize.fmin(fun.evalua,seed[ant(nn),u],maxfun=800000,maxiter=800000,ftol=1e-6,xtol=1e-6)
-      res = minimize(function(Hamil,state[u]).evalua,seed[ant(nn),u])
+      res = minimize(function(Hamil,state[u]).evalua,seed[nn,u],method='Powell')
+      #Nelder-Mead, 
       seed[nn,u] = res.x
       state[u] = Unit2(seed[nn,u]) @ state[u]
       state[u] = state[u]/np.sqrt((np.conj(state[u]) @ state[u]).real)
