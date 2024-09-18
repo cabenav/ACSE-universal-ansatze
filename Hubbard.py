@@ -190,12 +190,12 @@ for nn in range(trotter):
       #print("I am computing for the coupling: ", u, "  and the iteration: ", nn)
       Hamil=Ham(Ham1,Ham2,u/2)
       res = minimize(function2(Hamil-np.identity(dimH)*eigen[u,0],state[u]).evalua,seedH[nn,u],method='L-BFGS-B')
-      seedH[nn,u] = res.x
+      seedH[nn,u] = res.x   #output of the neural network : input of the unitary 
       #seedH[nn,u] = [1,1,1,1,1,u,u,u,u,u]
       frobeniusH[nn,u] = seedH[nn,u] @ seedH[nn,u]/L
-      state[u] = Unit2H(seedH[nn,u]) @ state[u]
-      state[u] = state[u]/np.sqrt((np.conj(state[u]) @ state[u]).real)
-      eigennumH[nn,u] = np.matmul(np.matmul(np.conj(state[u]),Hamil),state[u])
+      state[u] = Unit2H(seedH[nn,u]) @ state[u]       #computation of the new state
+      state[u] = state[u]/np.sqrt((np.conj(state[u]) @ state[u]).real)      #normalization
+      eigennumH[nn,u] = np.matmul(np.matmul(np.conj(state[u]),Hamil),state[u])             #energy calculation
       #res = minimize(function(Hamil,state[u]).evalua,seed[nn,u],method='L-BFGS-B')
       #seed[nn,u] = res.x
       #frobenius[nn,u] = seed[nn,u] @ seed[nn,u]
