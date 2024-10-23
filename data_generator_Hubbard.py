@@ -24,7 +24,7 @@ import pickle
 
 
 
-def run():
+def run(u_input):
 
    #FUNCTIONS
 
@@ -111,8 +111,8 @@ def run():
    L = 5
    Num = 2
    trotter = 5
-   u_input=0.3 # input value
-   print(f"L={L},Num={Num},trotter={trotter},u_input={u_input}")
+   #u_input=0.3 # input value
+   #print(f"L={L},Num={Num},trotter={trotter},u_input={u_input}")
 
    #GENERATION OF THE HILBERT SPACE
    ## This generates the Hilbert space {|000>,|001>,...} 
@@ -281,15 +281,30 @@ def run():
 
 
    #for u in range(Range+1):
-   u=0
+   #u=0
    for i in range(L):
       instate[L+i] = u_input/2
-   print("input Hamiltonian parameters", instate)
-   for nn in range(trotter):
-      print("output ansatz", nn, ":", seedH[nn,u])
-   print("ground-state energy", eigennumH[nn,u])
-   print("final state",state[0])
+   if False:
+      u=0
+      print("input Hamiltonian parameters", instate)
+      for nn in range(trotter):
+         print("output ansatz", nn, ":", seedH[nn,u])
+      print("ground-state energy", eigennumH[nn,u])
+      print("final state",state[0])
       #break
+
+   data1=[
+      instate, #length-10 inputs for hamiltonian
+      np.array([u_input]), #length-1 input for the program
+      np.array([eigennumH[nn,0]]), #"ground-state energy"
+      state[0].real, # the final state, length-10
+      state[0].imag, 
+      seedH[:,0].flatten(), #all ansatz parameters
+   ]
+   #print(data1)
+   data=np.concatenate(data1,axis=0)
+   #print(data)
+   return data
 
    plt.rc('axes', labelsize=15)
    plt.rc('font', size=15)
@@ -320,4 +335,34 @@ def run():
 
    #print inout, outpout and gs energy
 
-run()
+
+
+TEST=False
+trials=500
+num_threads = 8  #currently 1 thread takes 1000% cpu. Total available cores are 128. hence 8 threads works fine
+block_size=16*8*4
+filename_prefix = '/data/zwl/hubbard/h10'
+#from random import random
+import random
+from data_generator_Pool import append
+from multiprocessing import Pool
+import tqdm
+
+
+from configurator import print_config
+print_config(globals())
+
+if __name__=="__main__":
+   if TEST:
+      run(0.3)
+   else:
+      for trial in range(trials):
+         u_inputs = [ random.random() * 10 for _ in range(block_size)]
+         
+         with Pool(num_threads) as p:
+               tqdm.tqdm()
+               result = list(tqdm.tqdm(p.imap(run, u_inputs), total=block_size,desc=f"{trial}/{trials}"))            
+               #result = p.map(generate,list(range(block_size)))
+               data = np.array(result)
+               filename, shape = append(filename_prefix,data)
+               print(f'[{trial}/{trials}] data {data.shape} appended into {filename} {shape}')
