@@ -1,6 +1,6 @@
 print('''
       
-machine learning ansatz for ising model
+machine learning ansatz for hubbard model
       
 ''')
 
@@ -14,13 +14,14 @@ import torch
 #config
 #L=5
 #folder='../../DMRG/tenpy/data'
-folder='.'
+folder='/data/zwl/hubbard'
 #filename=f'{folder}/data-ising-L{L}-1.pt'  # 41450 entries
 #filename=f'{folder}/data-ising-L{L}-2.pt'  # 84950 entries
 #filename=f'{folder}/data-ising-L5.dict.pt.array'
 
 filename=f'{folder}/eigen.npy'
 filename=f'{folder}/eigen100000.npy'
+filename=f'{folder}/h10-0.npy'
 _=filename.split('/')[-1]
 filename_checkpoint=f'result/{_}.32'
 filename_loss=f'result/{_}.loss.32'
@@ -29,7 +30,7 @@ print('input/output files:',filename,filename_checkpoint,filename_loss)
 # config
 #trials=30
 #output_width=95-9
-output_width=1
+output_width=11
 hidden_size= 16
 num_hidden_layers=2
 LAYERS= [hidden_size for _ in range(num_hidden_layers+2)]
@@ -77,7 +78,7 @@ d=d.float()  #differ by 1e-9
 
 #print(d1-d2.double())
 X = d[:,:10]
-y = d[:,-1]
+y = d[:,12:22]
 #y=y.reshape((len(y),1))
 #X = d['X']
 #y = d['y']
