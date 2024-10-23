@@ -110,8 +110,9 @@ def run():
 
    L = 5
    Num = 2
-   trotter = 3
+   trotter = 5
    u_input=0.3 # input value
+   print(f"L={L},Num={Num},trotter={trotter},u_input={u_input}")
 
    #GENERATION OF THE HILBERT SPACE
    ## This generates the Hilbert space {|000>,|001>,...} 
@@ -279,14 +280,16 @@ def run():
    plt.show()
 
 
-   for u in range(Range+1):
-      for i in range(L):
-         instate[L+i] = u/2
-      print("input Hamiltonian parameters", instate)
-      for nn in range(trotter):
-         print("output ansatz", nn, ":", seedH[nn,u])
-      print("ground-state energy", eigennumH[nn,u])
-      break
+   #for u in range(Range+1):
+   u=0
+   for i in range(L):
+      instate[L+i] = u_input/2
+   print("input Hamiltonian parameters", instate)
+   for nn in range(trotter):
+      print("output ansatz", nn, ":", seedH[nn,u])
+   print("ground-state energy", eigennumH[nn,u])
+   print("final state",state[0])
+      #break
 
    plt.rc('axes', labelsize=15)
    plt.rc('font', size=15)
