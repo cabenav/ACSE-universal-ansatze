@@ -340,7 +340,7 @@ def run(u_input):
 TEST=False
 trials=500
 num_threads = 8  #currently 1 thread takes 1000% cpu. Total available cores are 128. hence 8 threads works fine
-block_size=16*8*4
+block_size=512*8
 filename_prefix = '/data/zwl/hubbard/h10'
 #from random import random
 import random
