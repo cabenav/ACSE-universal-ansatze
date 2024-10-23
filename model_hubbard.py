@@ -37,8 +37,8 @@ LAYERS= [hidden_size for _ in range(num_hidden_layers+2)]
 LAYERS[0]=10
 LAYERS[-1]=output_width
 #LAYERS=[2*L-1,L*8*8,L*8*8,L*8*8,L*8*8,1]
-n_epochs = 10 #250   # number of epochs to run
-batch_size = 64*10 #10  # size of each batch
+n_epochs = 100 #250   # number of epochs to run
+batch_size = 64*1 #10  # size of each batch
 #torch.set_printoptions(8)
 torch.set_printoptions(linewidth=140)
 
@@ -210,7 +210,7 @@ def model_train(model, X_train, y_train, X_val, y_val,best_acc=-np.inf,best_weig
             #save into file
             #torch.save(best_weights,filename_checkpoint)
             #print(f'weights saved into {filename_checkpoint} at epoch={epoch}, acc={acc}')
-        loss_list.append([loss,acc,best_acc])
+        loss_list.append([loss,-acc,-best_acc])
     #skip best acc
     #return acc
     # restore model and return best accuracy
