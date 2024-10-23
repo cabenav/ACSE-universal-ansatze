@@ -111,6 +111,7 @@ def run():
    L = 5
    Num = 2
    trotter = 3
+   u_input=0.3 # input value
 
    #GENERATION OF THE HILBERT SPACE
    ## This generates the Hilbert space {|000>,|001>,...} 
@@ -150,52 +151,61 @@ def run():
    FI1 =[0,1,2,3,4,5,6,7,8,9,10]
    FI1b =[0,0.5,1,1.5,2,2.5,3,3.5,4,4.5,5]
 
+   
    eigen = [] 
-   data_in_list=[]
-   #for u in range(0,Range+1):
-   min,max = 0,10
-   for u in range(0,100000+1):
-      _u = u/10000
-
-      #h = Ham(Ham1,Ham2,_u/2)
-      item_in = [1,1,1,1,1,_u/2,_u/2,_u/2,_u/2,_u/2]
-      data_in_list.append(item_in)
-
-      #print(_u/2,h)
-      #input('...')
-
-      v1, v2 = LA.eig(Ham(Ham1,Ham2,_u/2))
-      r = v1.real
-      r.sort()
-      eigen.append(r)
-      #eigen.append(v1)
-      #eigen[u].real
-      #eigen[u].sort()
+   for u in range(0,Range+1):
+      v1, v2 = LA.eig(Ham(Ham1,Ham2,u/2))
+      eigen.append(v1)
+      eigen[u].real
+      eigen[u].sort()
    eigen=np.array(eigen)
 
-   #print(eigen)
-   print(eigen[:,0])
-   data_out = eigen[:,0]
-   data_out = data_out[...,np.newaxis]
-   print(data_out)
-   data_in = np.array(data_in_list)
-   print(data_in)
-   data=np.concatenate((data_in,data_out),1)
-   print(data)
-   np.save(filename:='eigen100000.npy',data)
-   plt.xlabel('u/2')
-   plt.ylabel('exact energy')
-   plt.title('energy vs u \n Hamiltonian input: (1,1,1,1,1,u/2,u/2,u/2,u/2,u/2)')
-   #plt.plot(range(0,10000+1)/10,data)
-   x = np.linspace(start:=0,stop:=1.0001/2,num=10001)
-   plt.plot(x,data_out)
-   plt.show()
-   #plt.plot(FI1b, (eigennumH[nn]-eigen[:,0])/eigen[:,0]*100, label=f"HCQE {nn}")
+   if False:
+      eigen = [] 
+      data_in_list=[]
+      #for u in range(0,Range+1):
+      min,max = 0,10
+      for u in range(0,100000+1):
+         _u = u/10000
+         #h = Ham(Ham1,Ham2,_u/2)
+         item_in = [1,1,1,1,1,_u/2,_u/2,_u/2,_u/2,_u/2]
+         data_in_list.append(item_in)
+
+         #print(_u/2,h)
+         #input('...')
+
+         v1, v2 = LA.eig(Ham(Ham1,Ham2,_u/2))
+         r = v1.real
+         r.sort()
+         eigen.append(r)
+         #eigen.append(v1)
+         #eigen[u].real
+         #eigen[u].sort()
+      eigen=np.array(eigen)
+
+      #print(eigen)
+      print(eigen[:,0])
+      data_out = eigen[:,0]
+      data_out = data_out[...,np.newaxis]
+      print(data_out)
+      data_in = np.array(data_in_list)
+      print(data_in)
+      data=np.concatenate((data_in,data_out),1)
+      print(data)
+      np.save(filename:='eigen100000.npy',data)
+      plt.xlabel('u/2')
+      plt.ylabel('exact energy')
+      plt.title('energy vs u \n Hamiltonian input: (1,1,1,1,1,u/2,u/2,u/2,u/2,u/2)')
+      #plt.plot(range(0,10000+1)/10,data)
+      x = np.linspace(start:=0,stop:=1.0001/2,num=10001)
+      plt.plot(x,data_out)
+      plt.show()
+      #plt.plot(FI1b, (eigennumH[nn]-eigen[:,0])/eigen[:,0]*100, label=f"HCQE {nn}")
 
 
-   #print(Ham1)
-   #print(Ham2)
-   input('...')
+      #print(Ham1)
+      #print(Ham2)
+      input('...')
 
    #for i in range(dimH):
    #   plt.plot(FI1,np.transpose(eigen)[i],'r-', mfc='none',lw=1)
@@ -236,9 +246,13 @@ def run():
       instate[i] = 1
 
    for nn in range(trotter):
-      for u in range(Range+1):
+      #for u in range(Range+1):
+      for u in range(1): #only do it once
          #print("I am computing for the coupling: ", u, "  and the iteration: ", nn)
-         Hamil=Ham(Ham1,Ham2,u/2)
+         _u = u_input/2
+         #Hamil=Ham(Ham1,Ham2,u/2)
+         Hamil=Ham(Ham1,Ham2,_u)
+
          res = minimize(function2(Hamil-np.identity(dimH)*eigen[u,0],state[u]).evalua,seedH[nn,u],method='L-BFGS-B')
          seedH[nn,u] = res.x   #output of the neural network : input of the unitary 
          #seedH[nn,u] = [1,1,1,1,1,u,u,u,u,u]
@@ -272,6 +286,7 @@ def run():
       for nn in range(trotter):
          print("output ansatz", nn, ":", seedH[nn,u])
       print("ground-state energy", eigennumH[nn,u])
+      break
 
    plt.rc('axes', labelsize=15)
    plt.rc('font', size=15)
