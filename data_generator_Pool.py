@@ -27,8 +27,7 @@ filesize_limit_in_bytes = filesize_limit * 1.0e6 # in bytes
 
 TEST=False
 ############################# config end  #################################
-from configurator import print_config
-print_config(globals())
+
 
 import os
 def append(filename_prefix, array , filesize_limit = 100.0):
@@ -50,6 +49,8 @@ def append(filename_prefix, array , filesize_limit = 100.0):
 import sys
 from multiprocessing import Pool
 if __name__=="__main__":
+    from configurator import print_config
+    print_config(globals())
     if TEST:
         
         import torch
