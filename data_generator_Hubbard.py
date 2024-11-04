@@ -22,137 +22,134 @@ import pickle
 #Num = int(input("Number of particles: "))
 #trotter = int(input("Trotter (integer) steps: "))
 
+L = 8 #5
+Num = 2
+trotter = 5
+#u_input=0.3 # input value
+#print(f"L={L},Num={Num},trotter={trotter},u_input={u_input}")
+
+
+
+#FUNCTIONS
+def Ham(H1,H2,U):
+      return (H1+np.multiply(H2,U))
+
+def vecf(w,res1):
+   vecprov = []   
+   for i in range(len(res1)):
+      cont = 1     
+      for x in range(len(w)):
+         cont *= w[x]**(1-res1[i][x]) *(1-w[x])**(res1[i][x]) 
+      vecprov.append(cont)
+   return vecprov  
+
+def chop(expr, delta=10**-6):
+   return np.ma.masked_inside(expr, -delta, delta).filled(0).real
+
+def sig(j):
+   if j < L-1:   
+      return j+1
+   else:
+      return 0
+      
+def sig2(j):
+   if j > 3:   
+      return j-1
+   else:
+      return j
+      
+def ant(j):
+   if j == 0:   
+      return 0
+   elif j == 1:   
+      return 0
+   else:
+      return j-2
+      
+
+
+#GENERATION OF THE HILBERT SPACE
+## This generates the Hilbert space {|000>,|001>,...} 
+vec = [ele for ele in product([1,0], repeat = L) if np.sum(ele)==Num]
+vec = np.array(vec)
+dimH = vec.shape[0]
+
+#GENERATION OF THE OPERATORS
+Op1 = np.zeros((L,dimH,dimH))
+Op2 = np.zeros((L,dimH,dimH))
+
+for j in range(L):
+   for k1 in range(dimH):
+      Op2[j,k1,k1] = vec[k1][j]
+      if vec[k1][j] == 1 and vec[k1][sig(j)] == 0:
+         aux = copy(vec[k1])
+         aux[j] =0
+         aux[sig(j)] = 1
+         for k2 in range(dimH):
+            if (aux == vec[k2]).all(): 
+               if j < L-1:
+                  Op1[j,k1,k2] = 1 
+               else:
+                  Op1[j,k1,k2] = (-1)**(Num-1) 
+
+#CONSTRUCTION OF THE HAMILTONIANS
+
+Ham1 =-sum(Op1[k] + np.transpose(Op1[k]) for k in range(L))
+Ham2 = sum(np.matmul(Op2[k], Op2[sig(k)]) for k in range(L))
+#Range = 20
+#FI1 =[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]
+#Range = 20
+#FI1 =[-10,-9,-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9,10]
+
+Range = 10
+FI1 =[0,1,2,3,4,5,6,7,8,9,10]
+FI1b =[0,0.5,1,1.5,2,2.5,3,3.5,4,4.5,5]
+
+#CONSTRUCTION OF UNITARIES
+def Unit(params,Hamil):
+   x = params
+   Full = sum(np.multiply(Op1[k]+np.transpose(Op1[k]),x[k])  for k in range(L))+ (1j)*sum(np.multiply(Op1[k]-np.transpose(Op1[k]),x[k+L])  for k in range(L))+sum(np.multiply(np.matmul(Op2[k], Op2[sig(k)]),x[k+2*L])  for k in range(L))
+   Unitary = linalg.expm(-(1j)*Full)
+   Unitarydag = np.conj(np.transpose(Unitary))
+   return np.matmul(np.matmul(Unitarydag,Hamil),Unitary)
+   
+def Unit2(params):
+   x = params
+   Full = sum(np.multiply(Op1[k]+np.transpose(Op1[k]),x[k])  for k in range(L))+ (1j)*sum(np.multiply(Op1[k]-np.transpose(Op1[k]),x[k+L])  for k in range(L))+sum(np.multiply(np.matmul(Op2[k], Op2[sig(k)]),x[k+2*L])  for k in range(L))
+   return linalg.expm(-(1j)*Full)
+   
+class function():
+   def __init__(self,Hamil,vecL):
+      self.Hamil = Hamil
+      self.vecL = vecL
+   def evalua(self,seed):
+      matriz = Unit(seed,Hamil)
+      return (np.matmul(np.matmul(np.conj(self.vecL),matriz),self.vecL)).real
+   
+def UnitH(params,Hamil):
+   x = params
+   Unitary = Unit2H(params)
+   Unitarydag = np.conj(np.transpose(Unitary))
+   return np.matmul(np.matmul(Unitarydag,Hamil),Unitary)
+   
+def Unit2H(params):
+   x = params
+   Full = sum(np.multiply(Op1[k]+np.transpose(Op1[k]),x[k])  for k in range(L))+sum(np.multiply(np.matmul(Op2[k], Op2[sig(k)]),x[k+L])  for k in range(L))
+   return linalg.expm(Full)
+   
+   
+class function2():
+   def __init__(self,Hamil,vecL):
+      self.Hamil = Hamil
+      self.vecL = vecL
+   def evalua(self,seed):
+      matriz = UnitH(seed,self.Hamil)
+      vec2 = Unit2H(seed) @ self.vecL
+      return (np.matmul(np.matmul(np.conj(self.vecL),matriz),self.vecL)/(np.conj(vec2) @ vec2)).real
+
 
 
 def run(u_input):
-
-   #FUNCTIONS
-
-   def Ham(H1,H2,U):
-      return (H1+np.multiply(H2,U))
-
-   def vecf(w,res1):
-      vecprov = []   
-      for i in range(len(res1)):
-         cont = 1     
-         for x in range(len(w)):
-            cont *= w[x]**(1-res1[i][x]) *(1-w[x])**(res1[i][x]) 
-         vecprov.append(cont)
-      return vecprov  
-
-   def chop(expr, delta=10**-6):
-      return np.ma.masked_inside(expr, -delta, delta).filled(0).real
-
-   def sig(j):
-      if j < L-1:   
-         return j+1
-      else:
-         return 0
-         
-   def sig2(j):
-      if j > 3:   
-         return j-1
-      else:
-         return j
-         
-   def ant(j):
-      if j == 0:   
-         return 0
-      elif j == 1:   
-         return 0
-      else:
-         return j-2
-         
-   #CONSTRUCTION OF UNITARIES
-   def Unit(params,Hamil):
-      x = params
-      Full = sum(np.multiply(Op1[k]+np.transpose(Op1[k]),x[k])  for k in range(L))+ (1j)*sum(np.multiply(Op1[k]-np.transpose(Op1[k]),x[k+L])  for k in range(L))+sum(np.multiply(np.matmul(Op2[k], Op2[sig(k)]),x[k+2*L])  for k in range(L))
-      Unitary = linalg.expm(-(1j)*Full)
-      Unitarydag = np.conj(np.transpose(Unitary))
-      return np.matmul(np.matmul(Unitarydag,Hamil),Unitary)
-      
-   def Unit2(params):
-      x = params
-      Full = sum(np.multiply(Op1[k]+np.transpose(Op1[k]),x[k])  for k in range(L))+ (1j)*sum(np.multiply(Op1[k]-np.transpose(Op1[k]),x[k+L])  for k in range(L))+sum(np.multiply(np.matmul(Op2[k], Op2[sig(k)]),x[k+2*L])  for k in range(L))
-      return linalg.expm(-(1j)*Full)
-      
-   class function():
-      def __init__(self,Hamil,vecL):
-         self.Hamil = Hamil
-         self.vecL = vecL
-      def evalua(self,seed):
-         matriz = Unit(seed,Hamil)
-         return (np.matmul(np.matmul(np.conj(self.vecL),matriz),self.vecL)).real
-      
-   def UnitH(params,Hamil):
-      x = params
-      Unitary = Unit2H(params)
-      Unitarydag = np.conj(np.transpose(Unitary))
-      return np.matmul(np.matmul(Unitarydag,Hamil),Unitary)
-      
-   def Unit2H(params):
-      x = params
-      Full = sum(np.multiply(Op1[k]+np.transpose(Op1[k]),x[k])  for k in range(L))+sum(np.multiply(np.matmul(Op2[k], Op2[sig(k)]),x[k+L])  for k in range(L))
-      return linalg.expm(Full)
-      
-      
-   class function2():
-      def __init__(self,Hamil,vecL):
-         self.Hamil = Hamil
-         self.vecL = vecL
-      def evalua(self,seed):
-         matriz = UnitH(seed,Hamil)
-         vec2 = Unit2H(seed) @ self.vecL
-         return (np.matmul(np.matmul(np.conj(self.vecL),matriz),self.vecL)/(np.conj(vec2) @ vec2)).real
-
-
-
-
-   L = 8 #5
-   Num = 2
-   trotter = 5
-   #u_input=0.3 # input value
-   #print(f"L={L},Num={Num},trotter={trotter},u_input={u_input}")
-
-   #GENERATION OF THE HILBERT SPACE
-   ## This generates the Hilbert space {|000>,|001>,...} 
-   vec = [ele for ele in product([1,0], repeat = L) if np.sum(ele)==Num]
-   vec = np.array(vec)
-   dimH = vec.shape[0]
-
-   #GENERATION OF THE OPERATORS
-   Op1 = np.zeros((L,dimH,dimH))
-   Op2 = np.zeros((L,dimH,dimH))
-
-   for j in range(L):
-      for k1 in range(dimH):
-         Op2[j,k1,k1] = vec[k1][j]
-         if vec[k1][j] == 1 and vec[k1][sig(j)] == 0:
-            aux = copy(vec[k1])
-            aux[j] =0
-            aux[sig(j)] = 1
-            for k2 in range(dimH):
-               if (aux == vec[k2]).all(): 
-                  if j < L-1:
-                     Op1[j,k1,k2] = 1 
-                  else:
-                     Op1[j,k1,k2] = (-1)**(Num-1) 
-
-
-   #CONSTRUCTION OF THE HAMILTONIANS
-
-   Ham1 =-sum(Op1[k] + np.transpose(Op1[k]) for k in range(L))
-   Ham2 = sum(np.matmul(Op2[k], Op2[sig(k)]) for k in range(L))
-   #Range = 20
-   #FI1 =[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]
-   #Range = 20
-   #FI1 =[-10,-9,-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9,10]
-
-   Range = 10
-   FI1 =[0,1,2,3,4,5,6,7,8,9,10]
-   FI1b =[0,0.5,1,1.5,2,2.5,3,3.5,4,4.5,5]
-
-   
    eigen = [] 
    for u in range(0,Range+1):
       v1, v2 = LA.eig(Ham(Ham1,Ham2,u/2))
@@ -304,7 +301,11 @@ def run(u_input):
    #print(data1)
    data=np.concatenate(data1,axis=0)
    #print(data)
+   
+   
+
    return data
+
 
    plt.rc('axes', labelsize=15)
    plt.rc('font', size=15)
@@ -336,6 +337,18 @@ def run(u_input):
    #print inout, outpout and gs energy
 
 
+
+#Ham1 =-sum(Op1[k] + np.transpose(Op1[k]) for k in range(L))
+#Ham2 = sum(np.matmul(Op2[k], Op2[sig(k)]) for k in range(L))
+def Xy2energy(_X,_y):
+   u_input= _x[-1]*2
+   Hamil=Ham(Ham1,Ham2,u_input)
+   state = _y[1:]  # remove the first one for energy
+   eigennumH = np.matmul(np.matmul(np.conj(state),Hamil),state)
+   energy = _y[0]
+   # compare
+   print('check diff:', eigennumH,energy)
+   
 
 TEST=False
 trials=500
