@@ -15,11 +15,13 @@ num_threads=12  # 86 - 12*4 = 38 # 86-24=62 /4 = 15
 block_size = num_threads * 200 * 5
 #folder = 'data'
 #folder = '/public/home/weileizeng/ansatz-data/parameter'
-folder = '/public/home/weileizeng/ansatz-data/p2'
+#folder = '/public/home/weileizeng/ansatz-data/p2'
+folder = '/data/zwl/ansatz-data/p2'  # change for new workstation
 #filename_prefix=f'{folder}/m4'
 #filename_prefix=f'{folder}/m6'
 #filename_prefix=f'{folder}/p1'
-filename_prefix=f'{folder}/p2'
+#filename_prefix=f'{folder}/p2'  #p2 for range (-0.2,0.2)
+filename_prefix=f'{folder}/f5'  #f5 for range (-0.5,0.5)
 #filename='tmp.npy'
 # discontribute data into list of files with limited filesize or avoid slow I/O
 filesize_limit = 300 #50 # in Mb
