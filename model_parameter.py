@@ -34,8 +34,11 @@ tag='v0'
 gpu=0
 #single_data_file=False
 data_file_limit=-1
-
+truncate_data_size=-1 #default -1
 evaluation_only = False
+
+
+
 
 exec(open('configurator.py').read()) # overrides from command line or config file
 ######################### config end   ###############################
@@ -194,6 +197,7 @@ def load(filename_prefix): #loadd all files with this filename prefix
         #print('only processing',filename,'and skip other data files')
         #break
     data = np.concatenate(data_list)
+    print('loaded data:',data.shape)
 
     if False:
         verify_data(data)
@@ -217,12 +221,15 @@ print(d[0])
 #torch.set_default_dtype(torch.float16)
 #d=d.half()  # half precision for fast training on large nn
 
-
+if truncate_data_size>0: #control data size
+    d=d[:truncate_data_size]
 
 
 
 X = d[:,:16]  #random input for Ham
 y = d[:,16:32]    # Ansatz parameter
+
+
 
 # use the last 1000 for evaluation
 eval_size=d.shape[0]//5
@@ -230,6 +237,7 @@ eval_size=d.shape[0]//5
 
 X_test,y_test = X[-eval_size:],y[-eval_size:] 
 X,y = X[:-eval_size],y[:-eval_size]
+Xyshape=[X.shape,y.shape]  # record data size
 
 #Ene_test=d[-eval_size:,32:40] # to calculate accuracy
 Ene_test=d[-eval_size:,88:92] # to calculate accuracy # real part only
