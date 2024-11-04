@@ -263,7 +263,7 @@ def run(u_input):
          state[u] = Unit2H(seedH[nn,u]) @ state[u]       #computation of the new state
          state[u] = state[u]/np.sqrt((np.conj(state[u]) @ state[u]).real)      #normalization
          eigennumH[nn,u] = np.matmul(np.matmul(np.conj(state[u]),Hamil),state[u])             #energy calculation
-         if nn==4:
+         if False: #nn==4:
             print('check')
             print(state[u])
             #print('u=',u,'state',state[u])
@@ -299,8 +299,8 @@ def run(u_input):
       print("ground-state energy", eigennumH[nn,u])
       print("final state",state[0])
       #break
-   print('nn=',nn)
-   print(eigennumH[:,0])
+   #print('nn=',nn)
+   #print(eigennumH[:,0])
    data1=[
       instate, #length-10 inputs for hamiltonian
       np.array([u_input]), #length-1 input for the program
@@ -354,16 +354,17 @@ def run(u_input):
 def Xy2energy(_X,_y): #_X, _y for a single data entry
    u_input= _X[-1]*2
    Hamil=Ham(Ham1,Ham2,u_input/2)
-   print(u_input)
+   #print(u_input)
    state = _y[1:]  # remove the first one for energy
-   print('check 2')
-   print(state)
-   print(Hamil)
-   print('conj',np.conj(state))
+   #print('check 2')
+   #print(state)
+   #print(Hamil)
+   #print('conj',np.conj(state))
    eigennumH = np.matmul(np.matmul(np.conj(state),Hamil),state)
-   energy = _y[0]
+   #energy = _y[0]
    # compare
-   print('check diff:', eigennumH,energy)
+   #print('check diff:', eigennumH,energy)
+   return eigennumH
    
 
 
