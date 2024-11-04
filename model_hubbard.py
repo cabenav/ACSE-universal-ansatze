@@ -21,24 +21,26 @@ folder='/data/zwl/hubbard'
 
 filename=f'{folder}/eigen.npy'
 filename=f'{folder}/eigen100000.npy'
-filename=f'{folder}/h10-0.npy'
+filename=f'{folder}/h10-0.npy'  # L=5
+filename=f'{folder}/L8n2-h10-0.npy'  # L=8
+
 _=filename.split('/')[-1]
-filename_checkpoint=f'result/{_}.32'
-filename_loss=f'result/{_}.loss.32'
+filename_checkpoint=f'results/{_}.32'
+filename_loss=f'results/{_}.loss.32'
 print('input/output files:',filename,filename_checkpoint,filename_loss)
 
 # config
 #trials=30
 #output_width=95-9
 output_width=11
-hidden_size= 16
-num_hidden_layers=2
+hidden_size= 64
+num_hidden_layers=3
 LAYERS= [hidden_size for _ in range(num_hidden_layers+2)]
 LAYERS[0]=10
 LAYERS[-1]=output_width
 #LAYERS=[2*L-1,L*8*8,L*8*8,L*8*8,L*8*8,1]
-n_epochs = 100 #250   # number of epochs to run
-batch_size = 64*1 #10  # size of each batch
+n_epochs = 50 #250   # number of epochs to run
+batch_size = 24*1 #10  # size of each batch
 #torch.set_printoptions(8)
 torch.set_printoptions(linewidth=140)
 
@@ -54,12 +56,18 @@ device = (
 )
 # to choose gpu
 # CUDA_VISIBLE_DEVICES=1,2 python myscript.py
+# or use the following inside python
+if device == "cuda":
+    gpu=0
+    torch.cuda.set_device(gpu)
 print(f"Using {device} device")
 
-print('loading data...')
+print('loading data...') 
 #d = np.load('eigen.npy')
 d = np.load(filename)
 d = torch.tensor(d)
+
+d = d[:20000] # limit data
 print(d)
 
 
@@ -142,7 +150,7 @@ def acc_eval(y_pred,y_batch):
 
 
 
-def model_train(model, X_train, y_train, X_val, y_val,best_acc=-np.inf,best_weights = None):
+def model_train(model, X_train, y_train, X_val, y_val,best_acc_energy=-np.inf,best_weights = None):
     for i in [X_train, y_train, X_val, y_val]:
         print(i.shape)
     # loss function and optimizer
@@ -155,9 +163,13 @@ def model_train(model, X_train, y_train, X_val, y_val,best_acc=-np.inf,best_weig
 
     batch_start = torch.arange(0, len(X_train), batch_size)
 
+    loss_ansatz=1.0 # init value
+    acc_energy = -10
+    best_acc_energy = acc_energy
 
     for epoch in range(n_epochs):
         model.train()
+        loss_train_list=[]
         with tqdm.tqdm(batch_start, unit="batch", mininterval=0, disable=False) as bar:
             bar.set_description(f"Epoch {epoch}/{n_epochs}")            
             for start in bar:
@@ -171,21 +183,25 @@ def model_train(model, X_train, y_train, X_val, y_val,best_acc=-np.inf,best_weig
                 
                 y_pred = model(X_batch)
                 #print(y_pred.shape,y_batch.shape)
-                loss = loss_fn(y_pred, y_batch)
+                loss_train = loss_fn(y_pred, y_batch)
+                #loss_train = loss_fn(y_pred, y_batch) + loss_fn(y_pred[:,0],y_batch[:,0]) * 1000.0  # 10 times attention on energy
+                loss_train_list.append(loss_train)
                 # backward pass
                 optimizer.zero_grad()
-                loss.backward()
+                loss_train.backward()
                 # update weights
                 optimizer.step()
                 # print progress                
                 #acc = acc_eval(y_pred,y_batch)
-                acc = - loss
+                #acc = - loss_train
                 #print(acc)
                 bar.set_postfix(
-                    loss=float(loss),
-                    best_acc = float(best_acc),
-                    acc=float(acc)
+                    loss_ansatz=float(loss_ansatz),
+                    best_acc_energy = float(best_acc_energy),
+                    acc_energy=float(acc_energy),
+                    loss_train=float(loss_train)
                 )
+        loss_train_mean = torch.tensor(loss_train_list).cpu().mean()
         # evaluate accuracy at end of each epoch
         model.eval()
         X_val=X_val.to(device)
@@ -193,24 +209,24 @@ def model_train(model, X_train, y_train, X_val, y_val,best_acc=-np.inf,best_weig
         y_pred = model(X_val)
                 #acc = ((y_pred>0) == y_val).type(torch.float).mean()
         #acc = acc_eval(y_pred,y_val)
-        loss = loss_fn(y_pred[:,1:],y_val[:,1:])
+        loss_ansatz = loss_fn(y_pred[:,1:],y_val[:,1:]) # on ansatz
         
         #torch.save(loss_list,filename_loss)
         #print(f'loss list saved into {filename_loss}')
         #acc = - loss
-        acc=-loss_fn(y_pred[:,0],y_val[:,0])
+        acc_energy=-loss_fn(y_pred[:,0],y_val[:,0])  # on energy
         #print( ((y_pred-y_val)/y_val).abs() )
         
         #print(y_pred)
         #print(y_pred-y_val)
         #print(y_val)
-        if acc > best_acc:
-            best_acc = acc
+        if acc_energy > best_acc_energy:
+            best_acc_energy = acc_energy
             best_weights = copy.deepcopy(model.state_dict())
             #save into file
             #torch.save(best_weights,filename_checkpoint)
             #print(f'weights saved into {filename_checkpoint} at epoch={epoch}, acc={acc}')
-        loss_list.append([loss,-acc,-best_acc])
+        loss_list.append([loss_train_mean,loss_ansatz,-acc_energy,-best_acc_energy])
     #skip best acc
     #return acc
     # restore model and return best accuracy
@@ -218,7 +234,8 @@ def model_train(model, X_train, y_train, X_val, y_val,best_acc=-np.inf,best_weig
 
     
     loss2 = torch.tensor(loss_list).cpu()
-    np.save('results/hubbard_loss.npy',loss2)
+    #np.save('results/hubbard_loss.npy',loss2)
+    np.save(filename_loss,loss2)
 
     import matplotlib.pyplot as plt
     plt.xlabel('epoches')
@@ -234,7 +251,7 @@ def model_train(model, X_train, y_train, X_val, y_val,best_acc=-np.inf,best_weig
     plt.plot(_,label='loss')
     plt.show()
 
-    return best_acc,best_weights
+    return best_acc_energy,best_weights
 
 #from sklearn.model_selection import StratifiedKFold, train_test_split
 
