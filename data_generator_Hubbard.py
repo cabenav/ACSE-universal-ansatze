@@ -22,12 +22,17 @@ import pickle
 #Num = int(input("Number of particles: "))
 #trotter = int(input("Trotter (integer) steps: "))
 
-L = 8 #5
+L = 5 #5,8
 Num = 2
 trotter = 5
 #u_input=0.3 # input value
 #print(f"L={L},Num={Num},trotter={trotter},u_input={u_input}")
 
+TEST=True
+trials=500
+num_threads = 2 #8  #currently 1 thread takes 1000% cpu. Total available cores are 128. hence 8 threads works fine
+block_size=64 #512*8
+filename_prefix = '/data/zwl/hubbard/L8n2-h10'
 
 
 #FUNCTIONS
@@ -258,6 +263,11 @@ def run(u_input):
          state[u] = Unit2H(seedH[nn,u]) @ state[u]       #computation of the new state
          state[u] = state[u]/np.sqrt((np.conj(state[u]) @ state[u]).real)      #normalization
          eigennumH[nn,u] = np.matmul(np.matmul(np.conj(state[u]),Hamil),state[u])             #energy calculation
+         if nn==4:
+            print('check')
+            print(state[u])
+            #print('u=',u,'state',state[u])
+            print(Hamil)
          #res = minimize(function(Hamil,state[u]).evalua,seed[nn,u],method='L-BFGS-B')
          #seed[nn,u] = res.x
          #frobenius[nn,u] = seed[nn,u] @ seed[nn,u]
@@ -289,7 +299,8 @@ def run(u_input):
       print("ground-state energy", eigennumH[nn,u])
       print("final state",state[0])
       #break
-
+   print('nn=',nn)
+   print(eigennumH[:,0])
    data1=[
       instate, #length-10 inputs for hamiltonian
       np.array([u_input]), #length-1 input for the program
@@ -340,21 +351,23 @@ def run(u_input):
 
 #Ham1 =-sum(Op1[k] + np.transpose(Op1[k]) for k in range(L))
 #Ham2 = sum(np.matmul(Op2[k], Op2[sig(k)]) for k in range(L))
-def Xy2energy(_X,_y):
-   u_input= _x[-1]*2
-   Hamil=Ham(Ham1,Ham2,u_input)
+def Xy2energy(_X,_y): #_X, _y for a single data entry
+   u_input= _X[-1]*2
+   Hamil=Ham(Ham1,Ham2,u_input/2)
+   print(u_input)
    state = _y[1:]  # remove the first one for energy
+   print('check 2')
+   print(state)
+   print(Hamil)
+   print('conj',np.conj(state))
    eigennumH = np.matmul(np.matmul(np.conj(state),Hamil),state)
    energy = _y[0]
    # compare
    print('check diff:', eigennumH,energy)
    
 
-TEST=False
-trials=500
-num_threads = 2 #8  #currently 1 thread takes 1000% cpu. Total available cores are 128. hence 8 threads works fine
-block_size=64 #512*8
-filename_prefix = '/data/zwl/hubbard/L8n2-h10'
+
+
 #from random import random
 import random
 from data_generator_Pool import append
@@ -366,9 +379,15 @@ from configurator import print_config
 print_config(globals())
 
 if __name__=="__main__":
-   if TEST:
-      run(0.3)
+   if TEST: # do a test with out save anything
+      data=run(0.331)
+      #print(data)
+      d=data
+      X = d[:10]
+      y = d[11:22]
+      Xy2energy(X,y)
    else:
+      # a parallel program to generate data and save into file incrementally
       for trial in range(trials):
          u_inputs = [ random.random() * 10 for _ in range(block_size)]
          
