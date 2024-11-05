@@ -12,9 +12,10 @@ from scipy.interpolate import make_interp_spline
 from scipy.interpolate import Rbf, InterpolatedUnivariateSpline
 from scipy.interpolate import interp1d
 from scipy.sparse import csr_matrix
-import numdifftools as nd
+#import numdifftools as nd
 import scipy.optimize as optimize
 import pickle
+import statistics
  
 #FUNCTIONS
 
@@ -130,22 +131,29 @@ for j in range(L):
 
 Ham1 =-sum(Op1[k] + np.transpose(Op1[k]) for k in range(L))
 Ham2 = sum(np.matmul(Op2[k], Op2[sig(k)]) for k in range(L))
-#Range = 20
-#FI1 =[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]
+Range = 20
+FI1 =[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]
 #Range = 20
 #FI1 =[-10,-9,-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9,10]
 
-Range = 10
-FI1 =[0,1,2,3,4,5,6,7,8,9,10]
+#Range = 10
+#FI1 =[0,1,2,3,4,5,6,7,8,9,10]
 FI1b =[0,0.5,1,1.5,2,2.5,3,3.5,4,4.5,5]
 
-eigen = [] 
+eigen = []
+decoherences_exact = [] 
 for u in range(0,Range+1):
-   v1, v2 = LA.eig(Ham(Ham1,Ham2,u/2))
+   v1, v2 = LA.eig(Ham(Ham1,Ham2,u))
+   idx = v1.real.argsort()[::1]
    eigen.append(v1)
    eigen[u].real
    eigen[u].sort()
+   v2_aux = v2[:,idx[0]]
+   print(v2_aux.shape)
+   decoherences_exact.append(np.matmul(np.conj(v2_aux), Ham1 @ v2_aux))
+   decoherences_exact[u].real
 eigen=np.array(eigen)
+decoherences_exact = np.array(decoherences_exact)
 
 #for i in range(dimH):
 #   plt.plot(FI1,np.transpose(eigen)[i],'r-', mfc='none',lw=1)
@@ -167,6 +175,7 @@ eigen=np.array(eigen)
 
 eigennum = np.zeros((trotter,Range+1))
 eigennumH = np.zeros((trotter,Range+1))
+decoherences_approx = np.zeros((trotter,Range+1))
 
 seed=np.zeros((trotter,Range+1,3*L))
 seedH=np.zeros((trotter,Range+1,2*L))
@@ -188,14 +197,16 @@ for i in range(L):
 for nn in range(trotter):
    for u in range(Range+1):
       #print("I am computing for the coupling: ", u, "  and the iteration: ", nn)
-      Hamil=Ham(Ham1,Ham2,u/2)
+      Hamil=Ham(Ham1,Ham2,u)
       res = minimize(function2(Hamil-np.identity(dimH)*eigen[u,0],state[u]).evalua,seedH[nn,u],method='L-BFGS-B')
       seedH[nn,u] = res.x   #output of the neural network : input of the unitary 
       #seedH[nn,u] = [1,1,1,1,1,u,u,u,u,u]
       frobeniusH[nn,u] = seedH[nn,u] @ seedH[nn,u]/L
       state[u] = Unit2H(seedH[nn,u]) @ state[u]       #computation of the new state
       state[u] = state[u]/np.sqrt((np.conj(state[u]) @ state[u]).real)      #normalization
-      eigennumH[nn,u] = np.matmul(np.matmul(np.conj(state[u]),Hamil),state[u])             #energy calculation
+      eigennumH[nn,u] = np.matmul(np.matmul(np.conj(state[u]),Hamil),state[u]) 
+      decoherences_approx[nn,u] = np.matmul(np.matmul(np.conj(state[u]),Ham1),state[u]) 
+      #energy calculation
       #res = minimize(function(Hamil,state[u]).evalua,seed[nn,u],method='L-BFGS-B')
       #seed[nn,u] = res.x
       #frobenius[nn,u] = seed[nn,u] @ seed[nn,u]
@@ -204,20 +215,22 @@ for nn in range(trotter):
       #eigennum[nn,u] = np.matmul(np.matmul(np.conj(state[u]),Hamil),state[u])
    plt.rc('axes', labelsize=15)
    plt.rc('font', size=15)
-   plt.plot(FI1b, (eigennumH[nn]-eigen[:,0])/eigen[:,0]*100, label=f"HCQE {nn}")
+   print("mean",nn+1,"",statistics.mean((-(eigennumH[nn]-eigen[:,0])/eigen[:,0]*100).real))
+   #plt.plot(FI1, -(eigennumH[nn]-eigen[:,0])/eigen[:,0]*100, 'o', label=f"HCQE {nn+1}")
+   plt.plot(FI1,-(decoherences_approx[nn]-decoherences_exact)/L)
    #plt.plot(FI1, (eigennum[nn]-eigen[:,0])/eigen[:,0]*100, label='ACQE')
-   #plt.plot(FI1, eigennumH[nn], label='HCQE')
+   #plt.plot(FI1, eigennumH[nn], 'o', label=f"HCQE {nn+1}")
    #plt.plot(FI1, eigennum[nn], label='CQE')
-#plt.plot(FI1, eigen[:,0],'bo', mfc='none',label='exact')
+#plt.plot(FI1, eigen[:,0],'k--', mfc='none',label='exact')
 plt.legend(prop={"size":15},loc='upper left')
-plt.title("Error of the energy %")
+plt.title("% error in decoherences")
 plt.xlabel("$U/t$")
 plt.show()
 
 
 for u in range(Range+1):
    for i in range(L):
-      instate[L+i] = u/2
+      instate[L+i] = u
    print("input Hamiltonian parameters", instate)
    for nn in range(trotter):
       print("output ansatz", nn, ":", seedH[nn,u])
