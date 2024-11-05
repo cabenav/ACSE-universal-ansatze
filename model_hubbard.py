@@ -1,7 +1,5 @@
-print('''
-      
-machine learning ansatz for hubbard model
-      
+print('''     
+machine learning ansatz for hubbard model     
 ''')
 
 import copy
@@ -11,23 +9,25 @@ import torch.optim as optim
 import tqdm
 import torch
 
-#config
-#L=5
-#folder='../../DMRG/tenpy/data'
+# CONFIG
+
 folder='/data/zwl/hubbard'
-#filename=f'{folder}/data-ising-L{L}-1.pt'  # 41450 entries
-#filename=f'{folder}/data-ising-L{L}-2.pt'  # 84950 entries
-#filename=f'{folder}/data-ising-L5.dict.pt.array'
-
-filename=f'{folder}/eigen.npy'
-filename=f'{folder}/eigen100000.npy'
+#filename=f'{folder}/eigen.npy'
+#filename=f'{folder}/eigen100000.npy'
 filename=f'{folder}/h10-0.npy'  # L=5
-filename=f'{folder}/L8n2-h10-0.npy'  # L=8
+#filename=f'{folder}/L8n2-h10-0.npy'  # L=8
+truncate_data_size=20 #default -1
 
-_=filename.split('/')[-1]
+
+_=filename.split('/')[-1]  # folder/name.npy -> name
+#tag='-2k-v0.2'
+#tag='-200-v0.3'
+tag='-20-v0.1'
+_=_+tag
 filename_checkpoint=f'results/{_}.32'
 filename_loss=f'results/{_}.loss.32'
 print('input/output files:',filename,filename_checkpoint,filename_loss)
+filename_config_json=f'results/{_}.json'
 
 # config
 #trials=30
@@ -35,12 +35,12 @@ print('input/output files:',filename,filename_checkpoint,filename_loss)
 output_width=11
 hidden_size= 64
 num_hidden_layers=3
-LAYERS= [hidden_size for _ in range(num_hidden_layers+2)]
+LAYERS= [hidden_size for _ in range(num_hidden_layers+2)]  # 64 x 3
 LAYERS[0]=10
 LAYERS[-1]=output_width
-#LAYERS=[2*L-1,L*8*8,L*8*8,L*8*8,L*8*8,1]
-n_epochs = 50 #250   # number of epochs to run
-batch_size = 24*1 #10  # size of each batch
+
+n_epochs = 200 #250   # number of epochs to run
+batch_size = 12*1 #10  # size of each batch
 #torch.set_printoptions(8)
 torch.set_printoptions(linewidth=140)
 
@@ -58,7 +58,7 @@ device = (
 # CUDA_VISIBLE_DEVICES=1,2 python myscript.py
 # or use the following inside python
 if device == "cuda":
-    gpu=0
+    gpu=5
     torch.cuda.set_device(gpu)
 print(f"Using {device} device")
 
@@ -67,8 +67,10 @@ print('loading data...')
 d = np.load(filename)
 d = torch.tensor(d)
 
-d = d[:20000] # limit data
+#d = d[:20000] # limit data
+d = d[:truncate_data_size] # limit data
 print(d)
+eval_size=d.shape[0]//5 #use 20% for test
 
 
 #d = torch.load(filename)
@@ -101,6 +103,18 @@ print(type(X),X.dtype)
 #print('test shape X Y',X_test.shape,y_test.shape)
 
 #exit()
+
+from configurator import print_config, save_config
+#additional_keys=['filelist','LAYERS']
+#config_keys, config = print_config(globals(),additional_keys = additional_keys)
+config_keys, config = print_config(globals())
+save_config(config, filename_config_json)
+
+
+#def Xy2energy(_X,_y):
+#def get_energy(uu,state):
+#    eigennumH[nn,u] = np.matmul(np.matmul(np.conj(state[u]),Hamil),state[u])             #energy calculation
+
 
 class Deep(nn.Module):
     def __init__(self,layers=[28*28,640,640,60,10]):
@@ -274,8 +288,10 @@ for i in range(1):
     indices = torch.randperm(X.size()[0])
     X=X[indices]
     y=y[indices]
-    X_test,y_test = X[-1000:],y[-1000:]
-    _X,_y = X[:-1000],y[:-1000]
+    X_test,y_test = X[-eval_size:],y[-eval_size:]
+    _X,_y = X[:-eval_size],y[:-eval_size]
+    #X_test,y_test = X[-1000:],y[-1000:]
+    #_X,_y = X[:-1000],y[:-1000]
     #modify test data set as well    
     #acc = model_train(model, X[train], y[train], X[test], y[test])
     best_acc,best_weights = model_train(model, _X, _y, X_test, y_test, best_acc, best_weights)
@@ -294,3 +310,5 @@ cv_scores=np.array(cv_scores)
 #acc = np.mean(cv_scores)
 #std = np.std(cv_scores)
 #print("Model accuracy: %.2f%% (+/- %.2f%%)" % (acc*100, std*100))
+
+print_config(globals())
