@@ -10,6 +10,7 @@ import tqdm
 import torch
 
 # CONFIG
+L=5 # to decide data shape and position
 
 folder='/data/zwl/hubbard'
 #filename=f'{folder}/eigen.npy'
@@ -20,9 +21,9 @@ truncate_data_size=20 #default -1
 
 
 _=filename.split('/')[-1]  # folder/name.npy -> name
-#tag='-2k-v0.2'
+#tag='-200-v0.4'
 #tag='-200-v0.3'
-tag='-20-v0.1'
+tag='-20-v0.4'
 _=_+tag
 filename_checkpoint=f'results/{_}.32'
 filename_loss=f'results/{_}.loss.32'
@@ -32,15 +33,16 @@ filename_config_json=f'results/{_}.json'
 # config
 #trials=30
 #output_width=95-9
-output_width=11
+output_width=10
 hidden_size= 64
 num_hidden_layers=3
 LAYERS= [hidden_size for _ in range(num_hidden_layers+2)]  # 64 x 3
 LAYERS[0]=10
 LAYERS[-1]=output_width
 
-n_epochs = 200 #250   # number of epochs to run
-batch_size = 12*1 #10  # size of each batch
+learning_rate  = 0.0001  #0.0001
+n_epochs = 1200 #250   # number of epochs to run
+batch_size = 4*1 #10  # size of each batch
 #torch.set_printoptions(8)
 torch.set_printoptions(linewidth=140)
 
@@ -88,7 +90,9 @@ d=d.float()  #differ by 1e-9
 
 #print(d1-d2.double())
 X = d[:,:10]
-y = d[:,11:22]
+#y = d[:,11:22]
+y = d[:,12:22]
+energy = d[:,11]
 #y=y.reshape((len(y),1))
 #X = d['X']
 #y = d['y']
@@ -98,6 +102,7 @@ print('y',y)
 
 print('data shape X Y',X.shape,y.shape)
 print(type(X),X.dtype)
+#input('...')
 #torch.save(data,filename)
 #X_test,y_test = X[:1000],y[:1000]
 #print('test shape X Y',X_test.shape,y_test.shape)
@@ -115,6 +120,29 @@ save_config(config, filename_config_json)
 #def get_energy(uu,state):
 #    eigennumH[nn,u] = np.matmul(np.matmul(np.conj(state[u]),Hamil),state[u])             #energy calculation
 
+from data_generator_Hubbard import Xy2energy
+mse = nn.MSELoss()
+np.set_printoptions(linewidth=140)
+def get_acc(energy_data,X,y):
+    n = energy_data.shape[0]
+    energy_computed = torch.zeros_like(energy_data)
+    X = X.cpu().detach().numpy()
+    y = y.cpu().detach().numpy()
+    for i in range(n):
+        _X = X[i]
+        _y = y[i]
+        _energy = Xy2energy(_X,_y)
+        energy_computed[i] = _energy
+    acc = - mse(energy_data,energy_computed)
+    #print(energy_data)
+    #print(energy_computed)
+    #print(energy_computed- energy_data)
+    #print('acc=',acc)
+    #input('...')
+    return acc
+
+
+    
 
 class Deep(nn.Module):
     def __init__(self,layers=[28*28,640,640,60,10]):
@@ -172,7 +200,8 @@ def model_train(model, X_train, y_train, X_val, y_val,best_acc_energy=-np.inf,be
     #loss_fn = nn.CrossEntropyLoss()
     loss_fn = nn.MSELoss()
     loss_list=[]
-    optimizer = optim.Adam(model.parameters(), lr=0.0001)
+    
+    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
 
     batch_start = torch.arange(0, len(X_train), batch_size)
@@ -228,9 +257,13 @@ def model_train(model, X_train, y_train, X_val, y_val,best_acc_energy=-np.inf,be
         #torch.save(loss_list,filename_loss)
         #print(f'loss list saved into {filename_loss}')
         #acc = - loss
-        acc_energy=-loss_fn(y_pred[:,0],y_val[:,0])  # on energy
+        #acc_energy=-loss_fn(y_pred[:,0],y_val[:,0])  # on energy
         #print( ((y_pred-y_val)/y_val).abs() )
-        
+
+        # need compute energy here
+        acc_energy =  get_acc(energy_val,X_val,y_pred)
+
+
         #print(y_pred)
         #print(y_pred-y_val)
         #print(y_val)
@@ -241,6 +274,11 @@ def model_train(model, X_train, y_train, X_val, y_val,best_acc_energy=-np.inf,be
             #torch.save(best_weights,filename_checkpoint)
             #print(f'weights saved into {filename_checkpoint} at epoch={epoch}, acc={acc}')
         loss_list.append([loss_train_mean,loss_ansatz,-acc_energy,-best_acc_energy])
+
+        if (1+epoch) % 25 ==0: # save loss for each 100 epoches
+            _loss2 = torch.tensor(loss_list).cpu()
+            np.save(filename_loss,_loss2)
+            print(f'epoch = {epoch}, loss saved into {filename_loss}')
     #skip best acc
     #return acc
     # restore model and return best accuracy
@@ -290,6 +328,7 @@ for i in range(1):
     y=y[indices]
     X_test,y_test = X[-eval_size:],y[-eval_size:]
     _X,_y = X[:-eval_size],y[:-eval_size]
+    energy_val = energy[-eval_size:]
     #X_test,y_test = X[-1000:],y[-1000:]
     #_X,_y = X[:-1000],y[:-1000]
     #modify test data set as well    
