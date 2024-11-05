@@ -53,6 +53,7 @@ def print_config(globals_output:dict,additional_keys:list = None):
     how to use:
         from configurator import print_config
         print_config(globals()) 
+        add additinal keys for list to print and save
     '''
     config_keys = [k for k,v in globals_output.items() if not k.startswith('_') and isinstance(v, (int, float, bool, str)) and k not in ['arg','key','val','attempt']]
     if additional_keys:
@@ -61,3 +62,30 @@ def print_config(globals_output:dict,additional_keys:list = None):
     import json
     print(json.dumps(config, indent=2))
     return config_keys, config
+
+import json
+#print(json.dumps(config, indent=2))
+import os
+
+# save config into file, or verify config if file already exist
+def save_config(config:dict, filename_config_json, override=False,verify=True,important_keys=['hidden_size']):
+# verify existing config file or create new one.
+    if os.path.exists(filename_config_json):
+        print(f'Found existing config file: {filename_config_json}')
+        if verify:
+            with open(filename_config_json, 'r') as f:
+                # if file already exist, verify the config are the same
+                cfg = json.load(f)
+                #important_keys =['LAYERS','hidden_size']
+                #important_keys =['hidden_size']
+                for k in important_keys:  # make sure important keys are the same
+                    assert config[k] == cfg[k]
+                #for k in config_keys:    # report changed config
+                for k,_ in cfg.items():
+                    if config[k] != cfg[k]:
+                        print(f'Changed config: [{k}]\t  {cfg[k]} \t-> {config[k]}')        
+
+    #if not evaluation_only:
+    with open(filename_config_json, 'w') as f:
+        json.dump(config, f,indent=2)
+    print(f'config saved/overrided into {filename_config_json}')
