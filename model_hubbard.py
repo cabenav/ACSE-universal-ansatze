@@ -172,33 +172,6 @@ class Deep(nn.Module):
         x = self.output(x)
         return x
 
-# check the percentage error in predicted output ( ground state energy)
-def acc_eval(y_pred,y_batch):
-    #print(torch.sqrt(((y_pred - y_batch)**2).mean()))
-    #print(torch.sqrt(((y_pred - y_batch)**2).mean())/ (y_batch))
-    #print(torch.sqrt(((y_pred - y_batch)**2).mean())/ (y_batch).mean() )
-    #print(torch.sqrt(((y_pred - y_batch)**2).mean())/ ((y_batch).mean()) )
-    #print(y_pred.mean(0))
-    #print(y_batch.mean(0))
-    #print( torch.sqrt(((y_pred - y_batch)**2) ) )
-    #print( torch.sqrt(((y_pred - y_batch)**2) ).mean(0)  )
-    #print(y_batch.mean(0))
-    delta_mean=torch.sqrt(((y_pred - y_batch)**2) ).mean(0)
-    y_batch_mean = y_batch.mean(0)
-    y_pred_mean  = y_pred.mean(0)
-    y_mean = y_batch_mean + y_pred_mean
-    #print(delta_mean/y_mean)
-    #print(  (delta_mean/y_mean).mean() )
-    #input()
-    acc = (delta_mean/y_mean).mean()
-    if acc > 0 :
-        acc = - acc
-    return  acc
-#return  torch.sqrt(((y_pred - y_batch)**2).mean())/ ((y_batch).mean())
-
-
-
-
 def model_train(model, X_train, y_train, X_val, y_val,best_acc_energy=-np.inf,best_weights = None):
     for i in [X_train, y_train, X_val, y_val]:
         print(i.shape)
