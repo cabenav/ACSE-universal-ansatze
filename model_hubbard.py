@@ -13,22 +13,30 @@ from configurator import handler
 signal.signal(signal.SIGINT, handler) # print config before exit
 
 # CONFIG
-L=5 # to decide data shape and position
-gpu=4  # the indexed gpu to be used
+gpu=6  # the indexed gpu to be used
+folder='/data/zwl/hubbard'  #data folder
 
-folder='/data/zwl/hubbard'
-#filename=f'{folder}/h10-0.npy'  # L=5
-filename=f'{folder}/L5n2-h10-0.npy'  # L=5， added decoherence data
-#filename=f'{folder}/L8n2-h10-0.npy'  # L=8
-truncate_data_size=2000 #default -1
+
+L=8 # to decide data shape and position
+if L==5:
+    #filename=f'{folder}/h10-0.npy'  # L=5
+    filename=f'{folder}/L5n2-h10-0.npy'  # L=5， added decoherence data
+    #tag='-20000-v0.3'
+    #tag='-2000-v1.4'  
+    #tag='-200-v0.4'
+    #tag='-20-v0.8'  #tag='-20-v0.5'
+
+elif L==8:
+    #filename=f'{folder}/L8n2-h10-0.npy'  # L=8
+    filename=f'{folder}/L8n2-h10-wd-0.npy'  # L=8, added decoherence data
+    tag='-2000-v1.2'
+    tag='-20000-v1.2'
+
+truncate_data_size=20000 #default -1
 eval_size_min = 10
 eval_size_max = 100
 
 _=filename.split('/')[-1]  # folder/name.npy -> name
-#tag='-20000-v0.3'
-tag='-2000-v1.4'
-#tag='-200-v0.4'
-#tag='-20-v0.8'  #tag='-20-v0.5'
 _=_+tag
 filename_checkpoint=f'results/{_}.32'
 filename_loss=f'results/{_}.loss.32'
@@ -36,11 +44,16 @@ print('input/output files:',filename,filename_checkpoint,filename_loss)
 filename_config_json=f'results/{_}.json'
 
 # Nerual network hyper paramters
-output_width=10
+if L==5:
+    input_width=10
+    output_width=10
+elif L==8:
+    input_width = L*2
+    output_width = 28
 hidden_size= 64
 num_hidden_layers=3
 LAYERS= [hidden_size for _ in range(num_hidden_layers+2)]  # 64 x 3
-LAYERS[0]=10
+LAYERS[0]=input_width
 LAYERS[-1]=output_width
 
 learning_rate  = 0.00001  #0.0001
@@ -91,14 +104,21 @@ print(data[0])
 data=data.float()  #differ by 1e-9   # float is much faster and usually accurate enough; to use double, comment this line and set default type to be 
 
 # Get training data pair and evaluation data
-X = data[:,:10]
-#y = d[:,11:22]
-y = data[:,12:22]
-energy_from_file = data[:,11]
+if L==5:
+    X = data[:,:10]
+    #y = d[:,11:22] #with energy
+    y = data[:,12:22]
+elif L==8:
+    X = data[:,:L*2]
+    _index = 2*L +1+1
+    y = data[:,_index:(_index+28)]
+#energy_from_file = data[:,11]
+energy_from_file = data[:,-1]
 obsevables_from_file = data[:,-2:]
 
-print('data shape X Y',X.shape,y.shape)
+print('data shape X Y ob',X.shape,y.shape,obsevables_from_file.shape)
 print(type(X),X.dtype)
+#input()
 
 from configurator import print_config, save_config
 #additional_keys=['filelist','LAYERS']
@@ -110,6 +130,9 @@ save_config(config, filename_config_json)
 from data_generator_Hubbard import Xy2energy, Xy2acc
 mse = nn.MSELoss()
 np.set_printoptions(linewidth=140)
+if L==5:
+    compute_acc = Xy2acc
+
 def get_acc(energy_data,X,y):
     n = energy_data.shape[0]
     energy_computed = torch.zeros_like(energy_data)
@@ -130,13 +153,20 @@ def get_acc(energy_data,X,y):
     return acc
 
 def get_acc2(observables_data,X,y):
-    n = observables_data.shape[0]
+    '''
+        all input are n-row tensors
+        observables should have two columns for decoherence and energy respectively
+    '''
+    #print('observables_data.shape',observables_data.shape)
+    #input('...')
+    n = observables_data.shape[0] # get the batchsize
     observables_computed = torch.zeros_like(observables_data)
     X = X.cpu().detach().numpy()
     y = y.cpu().detach().numpy()
     for i in range(n):
         _X = X[i]
         _y = y[i]
+        #print(observables_data)
         _energy, _decoherences_approx = Xy2acc(_X,_y,decoherences_data= observables_data[i,0].item())
         observables_computed[i,0] = _decoherences_approx
         observables_computed[i,1] = _energy
@@ -237,6 +267,7 @@ def model_train(model, X_train, y_train, X_val, y_val,best_acc_energy=-np.inf,be
         print('compute obsevables use acc2')
         #acc_decoherence
         #acc_energy,_ =  get_acc2(obsevables_val,X_val,y_pred)
+        #print(obsevables_val)
         acc_decoherence,acc_energy = get_acc2(obsevables_val,X_val,y_pred)
         print('-'*50,'acc_energy=',acc_energy,'acc_decoherence=',acc_decoherence)
         #acc_ref = get_acc(energy_val,X_val,y_val)
@@ -308,9 +339,11 @@ for i in range(1):
     energy_from_file = energy_from_file[indices]
     energy_val = energy_from_file[-eval_size:]
     obsevables_val = obsevables_from_file[-eval_size:]
+    print('obsevables_val:',obsevables_val)
 
 
-    acc_ref0 = get_acc(energy_val,X_test,y_test) # test past, good data
+    #acc_ref0 = get_acc(energy_val,X_test,y_test) # test past, good data
+    _,acc_ref0 = get_acc2(obsevables_val,X_test,y_test) # test past, good data
 
 
 
