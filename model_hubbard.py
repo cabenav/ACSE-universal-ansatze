@@ -216,6 +216,9 @@ def model_train(model, X_train, y_train, X_val, y_val,best_acc_energy=-np.inf,be
     best_acc_decoherence = acc_decoherence
     acc_ref = acc_ref0
 
+    X_val=X_val.to(device)
+    y_val=y_val.to(device)  # use the same evaluation set throughout all epoches
+
     for epoch in range(n_epochs):
         model.train()
         loss_train_list=[]
@@ -250,8 +253,7 @@ def model_train(model, X_train, y_train, X_val, y_val,best_acc_energy=-np.inf,be
         loss_train_mean = torch.tensor(loss_train_list).cpu().mean()
         # evaluate accuracy at end of each epoch
         model.eval()
-        X_val=X_val.to(device)
-        y_val=y_val.to(device)        
+                
         y_pred = model(X_val)
         loss_ansatz = loss_fn(y_pred[:,1:],y_val[:,1:]) # on ansatz
         
