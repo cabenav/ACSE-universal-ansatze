@@ -11,19 +11,23 @@ import torch
 
 # CONFIG
 L=5 # to decide data shape and position
+gpu=4  # the indexed gpu to be used
 
 folder='/data/zwl/hubbard'
 #filename=f'{folder}/eigen.npy'
 #filename=f'{folder}/eigen100000.npy'
-filename=f'{folder}/h10-0.npy'  # L=5
+#filename=f'{folder}/h10-0.npy'  # L=5
+filename=f'{folder}/L5n2-h10-0.npy'  # L=5， added decoherence data
 #filename=f'{folder}/L8n2-h10-0.npy'  # L=8
-truncate_data_size=20 #default -1
-
+truncate_data_size=2000 #default -1
+eval_size_min = 10
+eval_size_max = 100
 
 _=filename.split('/')[-1]  # folder/name.npy -> name
+#tag='-20000-v0.3'
+tag='-2000-v1.1'
 #tag='-200-v0.4'
-#tag='-200-v0.3'
-tag='-20-v0.4'
+#tag='-20-v0.8'  #tag='-20-v0.5'
 _=_+tag
 filename_checkpoint=f'results/{_}.32'
 filename_loss=f'results/{_}.loss.32'
@@ -40,9 +44,9 @@ LAYERS= [hidden_size for _ in range(num_hidden_layers+2)]  # 64 x 3
 LAYERS[0]=10
 LAYERS[-1]=output_width
 
-learning_rate  = 0.0001  #0.0001
-n_epochs = 1200 #250   # number of epochs to run
-batch_size = 4*1 #10  # size of each batch
+learning_rate  = 0.00001  #0.0001
+n_epochs = 11200 #250   # number of epochs to run
+batch_size = 8*1 #10  # size of each batch
 #torch.set_printoptions(8)
 torch.set_printoptions(linewidth=140)
 
@@ -60,7 +64,6 @@ device = (
 # CUDA_VISIBLE_DEVICES=1,2 python myscript.py
 # or use the following inside python
 if device == "cuda":
-    gpu=5
     torch.cuda.set_device(gpu)
 print(f"Using {device} device")
 
@@ -69,10 +72,19 @@ print('loading data...')
 d = np.load(filename)
 d = torch.tensor(d)
 
-#d = d[:20000] # limit data
-d = d[:truncate_data_size] # limit data
-print(d)
+
 eval_size=d.shape[0]//5 #use 20% for test
+#eval_size_min = 1000
+if eval_size < eval_size_min:
+    evale_size = eval_size_min
+if eval_size > eval_size_max:
+    eval_size = eval_size_max
+
+#d = d[:20000] # limit data
+d = d[:(truncate_data_size+eval_size)] # limit data
+print(d)
+
+#eval_size_end = eval_size + 1000 # default -1
 
 
 #d = torch.load(filename)
@@ -84,7 +96,7 @@ eval_size=d.shape[0]//5 #use 20% for test
 print('sample entry d[0]')
 print(d[0])
 #d1=d[1]
-d=d.float()  #differ by 1e-9
+d=d.float()  #differ by 1e-9   # to use double, comment this line and set default type to be 
 #d2=d[1]
 #print(d[1])
 
@@ -93,6 +105,7 @@ X = d[:,:10]
 #y = d[:,11:22]
 y = d[:,12:22]
 energy = d[:,11]
+obsevables = d[:,-2:]
 #y=y.reshape((len(y),1))
 #X = d['X']
 #y = d['y']
@@ -109,6 +122,9 @@ print(type(X),X.dtype)
 
 #exit()
 
+#def verify_data(s_X,s_y,s_energy)
+
+
 from configurator import print_config, save_config
 #additional_keys=['filelist','LAYERS']
 #config_keys, config = print_config(globals(),additional_keys = additional_keys)
@@ -120,7 +136,7 @@ save_config(config, filename_config_json)
 #def get_energy(uu,state):
 #    eigennumH[nn,u] = np.matmul(np.matmul(np.conj(state[u]),Hamil),state[u])             #energy calculation
 
-from data_generator_Hubbard import Xy2energy
+from data_generator_Hubbard import Xy2energy, Xy2acc
 mse = nn.MSELoss()
 np.set_printoptions(linewidth=140)
 def get_acc(energy_data,X,y):
@@ -134,15 +150,38 @@ def get_acc(energy_data,X,y):
         _energy = Xy2energy(_X,_y)
         energy_computed[i] = _energy
     acc = - mse(energy_data,energy_computed)
-    #print(energy_data)
-    #print(energy_computed)
-    #print(energy_computed- energy_data)
-    #print('acc=',acc)
-    #input('...')
+    if False:  #print for test
+        print(energy_data)
+        print(energy_computed)
+        print(energy_computed- energy_data)
+        print('acc=',acc)
+        input('...')
     return acc
 
+def get_acc2(observables_data,X,y):
+    n = observables_data.shape[0]
+    observables_computed = torch.zeros_like(observables_data)
+    X = X.cpu().detach().numpy()
+    y = y.cpu().detach().numpy()
+    for i in range(n):
+        _X = X[i]
+        _y = y[i]
+        _energy, _decoherences_approx = Xy2acc(_X,_y,decoherences_data= observables_data[i,0].item())
+        observables_computed[i,0] = _decoherences_approx
+        observables_computed[i,1] = _energy
+    acc_decoherence = - mse(observables_data[:,0],observables_computed[:,0])
+    acc_energy = - mse(observables_data[:,1],observables_computed[:,1])
+    if False:  #print for test
+        print(observables_data)
+        print(observables_computed)
+        print(observables_computed- observables_data)
+        print('acc=',acc_decoherence,acc_energy)
+        input('...')
+    return acc_decoherence,acc_energy
 
-    
+# verify data here
+#get_acc(energy,X,y+1e-4)
+#input('...')
 
 class Deep(nn.Module):
     def __init__(self,layers=[28*28,640,640,60,10]):
@@ -209,6 +248,8 @@ def model_train(model, X_train, y_train, X_val, y_val,best_acc_energy=-np.inf,be
     loss_ansatz=1.0 # init value
     acc_energy = -10
     best_acc_energy = acc_energy
+    #acc_ref = acc_energy
+    acc_ref = acc_ref0
 
     for epoch in range(n_epochs):
         model.train()
@@ -242,7 +283,8 @@ def model_train(model, X_train, y_train, X_val, y_val,best_acc_energy=-np.inf,be
                     loss_ansatz=float(loss_ansatz),
                     best_acc_energy = float(best_acc_energy),
                     acc_energy=float(acc_energy),
-                    loss_train=float(loss_train)
+                    loss_train=float(loss_train),
+                    acc_ref = float(acc_ref)  # added for test
                 )
         loss_train_mean = torch.tensor(loss_train_list).cpu().mean()
         # evaluate accuracy at end of each epoch
@@ -261,7 +303,10 @@ def model_train(model, X_train, y_train, X_val, y_val,best_acc_energy=-np.inf,be
         #print( ((y_pred-y_val)/y_val).abs() )
 
         # need compute energy here
-        acc_energy =  get_acc(energy_val,X_val,y_pred)
+        print('compute obsevables use acc2')
+        acc_energy,_ =  get_acc2(obsevables_val,X_val,y_pred)
+        print('-'*50,'acc_energy=',acc_energy)
+        #acc_ref = get_acc(energy_val,X_val,y_val)
 
 
         #print(y_pred)
@@ -326,9 +371,18 @@ for i in range(1):
     indices = torch.randperm(X.size()[0])
     X=X[indices]
     y=y[indices]
+    obsevables=obsevables[indices]
     X_test,y_test = X[-eval_size:],y[-eval_size:]
     _X,_y = X[:-eval_size],y[:-eval_size]
+    energy = energy[indices]
     energy_val = energy[-eval_size:]
+    obsevables_val = obsevables[-eval_size:]
+
+
+    acc_ref0 = get_acc(energy_val,X_test,y_test) # test past, good data
+
+
+
     #X_test,y_test = X[-1000:],y[-1000:]
     #_X,_y = X[:-1000],y[:-1000]
     #modify test data set as well    
