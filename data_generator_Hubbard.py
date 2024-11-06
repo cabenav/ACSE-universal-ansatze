@@ -1,3 +1,6 @@
+'''
+   python data_generator_Hubbard.py
+'''
 import numpy as np
 from numpy import linalg as LA
 from numpy import count_nonzero
@@ -32,8 +35,8 @@ TEST=True
 trials=500
 num_threads = 2 #8  #currently 1 thread takes 1000% cpu. Total available cores are 128. hence 8 threads works fine
 block_size=64 #512*8
-filename_prefix = '/data/zwl/hubbard/L8n2-h10'
-
+#filename_prefix = '/data/zwl/hubbard/L8n2-h10'
+filename_prefix = '/data/zwl/hubbard/L5n2-h10'
 
 #FUNCTIONS
 def Ham(H1,H2,U):
@@ -310,6 +313,8 @@ def run(u_input):
       state[0].real, # the final state, length-10
       state[0].imag, 
       seedH[:,0].flatten(), #all ansatz parameters
+      np.array([decoherences_approx[nn,0]]),
+      np.array([eigennumH[nn,0]]), #"ground-state energy"  save it again  for easy read with decoherence
    ]
    #print(data1)
    data=np.concatenate(data1,axis=0)
@@ -367,13 +372,41 @@ def Xy2energy(_X,_y): #_X, _y for a single data entry
    #print(Hamil)
    #print('conj',np.conj(state))
    eigennumH = np.matmul(np.matmul(np.conj(state),Hamil),state)
-   
-   if False: # compare
+    
+
+   if True: # compare
       energy = _y[0]  # not true when _y has length 10
       print('check diff:', eigennumH,energy,eigennumH-energy)
+      
+
    return eigennumH
    
+def Xy2acc(_X,_y,decoherences_data=-1): 
+   '''
+      _X, _y for a single data entry
+      compute energy and decoherence for accuracy
+   '''
+   #print(_X.shape,_y.shape)
+   u_input= _X[-1]*2
+   Hamil=Ham(Ham1,Ham2,u_input/2)
+   #print(u_input)
+   if _y.shape[0]==11:
+      state = _y[1:]  # remove the first one for energy
+   else:
+      state = _y
+   #print('check 2')
+   #print(state)
+   #print(Hamil)
+   #print('conj',np.conj(state))
+   eigennumH = np.matmul(np.matmul(np.conj(state),Hamil),state)
+   decoherences_approx = np.matmul(np.matmul(np.conj(state),Ham1),state)
 
+   if True: # compare
+      energy = _y[0]  # not true when _y has length 10
+      print('check diff:', eigennumH,energy,eigennumH-energy)
+      if decoherences_data !=-1:
+         print('decoh diff:',decoherences_approx,decoherences_data,decoherences_approx-decoherences_data)
+   return eigennumH
 
 
 #from random import random
@@ -395,7 +428,9 @@ def energy_test():
       X = d[:10]
       y = d[11:22]
       print(i,e,end=',')
-      Xy2energy(X,y)
+      #Xy2energy(X,y)
+      decoherences_data = d[-2]
+      Xy2acc(X,y,decoherences_data=decoherences_data)
    
 
 if __name__=="__main__":
