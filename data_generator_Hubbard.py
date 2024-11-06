@@ -25,18 +25,23 @@ import pickle
 #Num = int(input("Number of particles: "))
 #trotter = int(input("Trotter (integer) steps: "))
 
-L = 5 #5,8
+L = 8 #5,8
 Num = 2
 trotter = 5
 #u_input=0.3 # input value
 #print(f"L={L},Num={Num},trotter={trotter},u_input={u_input}")
 
-TEST=True
+TEST=False
 trials=500
-num_threads = 2 #8  #currently 1 thread takes 1000% cpu. Total available cores are 128. hence 8 threads works fine
-block_size=64 #512*8
-#filename_prefix = '/data/zwl/hubbard/L8n2-h10'
-filename_prefix = '/data/zwl/hubbard/L5n2-h10'
+
+block_size=64*16 #512*8
+filename_prefix = '/data/zwl/hubbard/L8n2-h10-wd'
+#filename_prefix = '/data/zwl/hubbard/L5n2-h10'
+
+threads_config={'L=5':8,'L=8':2}
+num_threads = threads_config[f'L={L}']
+#num_threads = 2 #8  #currently 1 thread takes 1000% cpu for L=5. Total available cores are 128. hence 8 threads works fine
+# 8 for L=5, 2 for L=8
 
 #FUNCTIONS
 def Ham(H1,H2,U):
@@ -316,6 +321,10 @@ def run(u_input):
       np.array([decoherences_approx[nn,0]]),
       np.array([eigennumH[nn,0]]), #"ground-state energy"  save it again  for easy read with decoherence
    ]
+   #L=8 (16,),(1,),(1,),(28,),(28,),(80,),(1,),(1,)
+   #for i in data1:
+   #   print(i.shape,end=',')
+   #input('...')
    #print(data1)
    data=np.concatenate(data1,axis=0)
    #print(data)
@@ -401,12 +410,12 @@ def Xy2acc(_X,_y,decoherences_data=-1):
    eigennumH = np.matmul(np.matmul(np.conj(state),Hamil),state)
    decoherences_approx = np.matmul(np.matmul(np.conj(state),Ham1),state)
 
-   if True: # compare
+   if False: # compare
       energy = _y[0]  # not true when _y has length 10
       print('check diff:', eigennumH,energy,eigennumH-energy)
       if decoherences_data !=-1:
          print('decoh diff:',decoherences_approx,decoherences_data,decoherences_approx-decoherences_data)
-   return eigennumH
+   return eigennumH,decoherences_approx
 
 
 #from random import random
