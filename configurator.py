@@ -60,6 +60,7 @@ def print_config(globals_output:dict,additional_keys:list = None):
         config_keys.extend(additional_keys)
     config = {k: globals_output[k] for k in config_keys} # will be useful for logging
     import json
+    print('CONFIG:')
     print(json.dumps(config, indent=2))
     return config_keys, config
 
@@ -89,3 +90,24 @@ def save_config(config:dict, filename_config_json, override=False,verify=True,im
     with open(filename_config_json, 'w') as f:
         json.dump(config, f,indent=2)
     print(f'config saved/overrided into {filename_config_json}')
+
+
+import signal
+# print config before exit
+def handler(signum, frame):
+    '''
+        import signal
+        from configurator import handler
+        signal.signal(signal.SIGINT, handler) # print config before exit
+    '''
+    print('*'*30,'CTRL-c received. End the program...')
+    top_frame = frame
+    while top_frame.f_back:
+        #print('getting back')
+        top_frame = top_frame.f_back    
+    print_config(top_frame.f_globals)
+    #print('finish printing config')
+    #signal.default_int_handler(signum,frame) # exit and print trace
+    exit(1)
+
+#signal.signal(signal.SIGINT, handler)

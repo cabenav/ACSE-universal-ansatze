@@ -8,6 +8,9 @@ import torch.nn as nn
 import torch.optim as optim
 import tqdm
 import torch
+import signal
+from configurator import handler
+signal.signal(signal.SIGINT, handler) # print config before exit
 
 # CONFIG
 L=5 # to decide data shape and position
