@@ -25,7 +25,7 @@ eval_size_max = 100
 
 _=filename.split('/')[-1]  # folder/name.npy -> name
 #tag='-20000-v0.3'
-tag='-2000-v1.1'
+tag='-2000-v1.3'
 #tag='-200-v0.4'
 #tag='-20-v0.8'  #tag='-20-v0.5'
 _=_+tag
@@ -104,8 +104,8 @@ d=d.float()  #differ by 1e-9   # to use double, comment this line and set defaul
 X = d[:,:10]
 #y = d[:,11:22]
 y = d[:,12:22]
-energy = d[:,11]
-obsevables = d[:,-2:]
+energy_from_file = d[:,11]
+obsevables_from_file = d[:,-2:]
 #y=y.reshape((len(y),1))
 #X = d['X']
 #y = d['y']
@@ -248,6 +248,8 @@ def model_train(model, X_train, y_train, X_val, y_val,best_acc_energy=-np.inf,be
     loss_ansatz=1.0 # init value
     acc_energy = -10
     best_acc_energy = acc_energy
+    acc_decoherence = -10
+    best_acc_decoherence = acc_decoherence
     #acc_ref = acc_energy
     acc_ref = acc_ref0
 
@@ -304,21 +306,25 @@ def model_train(model, X_train, y_train, X_val, y_val,best_acc_energy=-np.inf,be
 
         # need compute energy here
         print('compute obsevables use acc2')
-        acc_energy,_ =  get_acc2(obsevables_val,X_val,y_pred)
-        print('-'*50,'acc_energy=',acc_energy)
+        #acc_decoherence
+        #acc_energy,_ =  get_acc2(obsevables_val,X_val,y_pred)
+        acc_decoherence,acc_energy = get_acc2(obsevables_val,X_val,y_pred)
+        print('-'*50,'acc_energy=',acc_energy,'acc_decoherence=',acc_decoherence)
         #acc_ref = get_acc(energy_val,X_val,y_val)
 
 
         #print(y_pred)
         #print(y_pred-y_val)
         #print(y_val)
+        if acc_decoherence > best_acc_decoherence:
+            best_acc_decoherence = acc_decoherence
         if acc_energy > best_acc_energy:
             best_acc_energy = acc_energy
             best_weights = copy.deepcopy(model.state_dict())
             #save into file
             #torch.save(best_weights,filename_checkpoint)
             #print(f'weights saved into {filename_checkpoint} at epoch={epoch}, acc={acc}')
-        loss_list.append([loss_train_mean,loss_ansatz,-acc_energy,-best_acc_energy])
+        loss_list.append([loss_train_mean,loss_ansatz,-acc_energy,-best_acc_energy,-acc_decoherence,-best_acc_decoherence])
 
         if (1+epoch) % 25 ==0: # save loss for each 100 epoches
             _loss2 = torch.tensor(loss_list).cpu()
@@ -371,12 +377,12 @@ for i in range(1):
     indices = torch.randperm(X.size()[0])
     X=X[indices]
     y=y[indices]
-    obsevables=obsevables[indices]
+    obsevables_from_file=obsevables_from_file[indices]
     X_test,y_test = X[-eval_size:],y[-eval_size:]
     _X,_y = X[:-eval_size],y[:-eval_size]
-    energy = energy[indices]
-    energy_val = energy[-eval_size:]
-    obsevables_val = obsevables[-eval_size:]
+    energy_from_file = energy_from_file[indices]
+    energy_val = energy_from_file[-eval_size:]
+    obsevables_val = obsevables_from_file[-eval_size:]
 
 
     acc_ref0 = get_acc(energy_val,X_test,y_test) # test past, good data
