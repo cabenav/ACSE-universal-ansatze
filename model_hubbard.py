@@ -229,12 +229,6 @@ def model_train(model, X_train, y_train, X_val, y_val,best_acc_energy=-np.inf,be
                 
         y_pred = model(X_val)
         loss_ansatz = loss_fn(y_pred[:,1:],y_val[:,1:]) # on ansatz
-        
-        #torch.save(loss_list,filename_loss)
-        #print(f'loss list saved into {filename_loss}')
-        #acc = - loss
-        #acc_energy=-loss_fn(y_pred[:,0],y_val[:,0])  # on energy
-        #print( ((y_pred-y_val)/y_val).abs() )
 
         # need compute energy here
         print('compute obsevables use acc2')
@@ -243,7 +237,6 @@ def model_train(model, X_train, y_train, X_val, y_val,best_acc_energy=-np.inf,be
         acc_decoherence,acc_energy = get_acc2(obsevables_val,X_val,y_pred)
         print('-'*50,'acc_energy=',acc_energy,'acc_decoherence=',acc_decoherence)
         #acc_ref = get_acc(energy_val,X_val,y_val)
-
 
         #print(y_pred)
         #print(y_pred-y_val)
@@ -262,11 +255,9 @@ def model_train(model, X_train, y_train, X_val, y_val,best_acc_energy=-np.inf,be
             _loss2 = torch.tensor(loss_list).cpu()
             np.save(filename_loss,_loss2)
             print(f'epoch = {epoch}, loss saved into {filename_loss}')
-    #skip best acc
-    #return acc
+
     # restore model and return best accuracy
     model.load_state_dict(best_weights)
-
     
     loss2 = torch.tensor(loss_list).cpu()
     #np.save('results/hubbard_loss.npy',loss2)
@@ -288,7 +279,6 @@ def model_train(model, X_train, y_train, X_val, y_val,best_acc_energy=-np.inf,be
 
     return best_acc_energy,best_weights
 
-#from sklearn.model_selection import StratifiedKFold, train_test_split
 
 cv_scores = []
 #model = Deep().to(device)
