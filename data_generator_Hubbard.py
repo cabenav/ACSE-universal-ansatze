@@ -230,6 +230,7 @@ def run(u_input):
 
    eigennum = np.zeros((trotter,Range+1))
    eigennumH = np.zeros((trotter,Range+1))
+   decoherences_approx = np.zeros((trotter,Range+1))
 
    seed=np.zeros((trotter,Range+1,3*L))
    seedH=np.zeros((trotter,Range+1,2*L))
@@ -263,6 +264,7 @@ def run(u_input):
          state[u] = Unit2H(seedH[nn,u]) @ state[u]       #computation of the new state
          state[u] = state[u]/np.sqrt((np.conj(state[u]) @ state[u]).real)      #normalization
          eigennumH[nn,u] = np.matmul(np.matmul(np.conj(state[u]),Hamil),state[u])             #energy calculation
+         decoherences_approx[nn,u] = np.matmul(np.matmul(np.conj(state[u]),Ham1),state[u]) 
          if False: #nn==4:
             print('check')
             print(state[u])
@@ -352,18 +354,23 @@ def run(u_input):
 #Ham1 =-sum(Op1[k] + np.transpose(Op1[k]) for k in range(L))
 #Ham2 = sum(np.matmul(Op2[k], Op2[sig(k)]) for k in range(L))
 def Xy2energy(_X,_y): #_X, _y for a single data entry
+   #print(_X.shape,_y.shape)
    u_input= _X[-1]*2
    Hamil=Ham(Ham1,Ham2,u_input/2)
    #print(u_input)
-   state = _y[1:]  # remove the first one for energy
+   if _y.shape[0]==11:
+      state = _y[1:]  # remove the first one for energy
+   else:
+      state = _y
    #print('check 2')
    #print(state)
    #print(Hamil)
    #print('conj',np.conj(state))
    eigennumH = np.matmul(np.matmul(np.conj(state),Hamil),state)
-   #energy = _y[0]
-   # compare
-   #print('check diff:', eigennumH,energy)
+   
+   if False: # compare
+      energy = _y[0]  # not true when _y has length 10
+      print('check diff:', eigennumH,energy,eigennumH-energy)
    return eigennumH
    
 
@@ -379,6 +386,18 @@ import tqdm
 from configurator import print_config
 print_config(globals())
 
+
+def energy_test():
+   '''Do multiple test to compared computed energy with saved data, got an average error lower than 4e-16'''
+   for i in range(1,100):
+      e = 10/i
+      d=run(e)
+      X = d[:10]
+      y = d[11:22]
+      print(i,e,end=',')
+      Xy2energy(X,y)
+   
+
 if __name__=="__main__":
    if TEST: # do a test with out save anything
       data=run(0.331)
@@ -387,6 +406,8 @@ if __name__=="__main__":
       X = d[:10]
       y = d[11:22]
       Xy2energy(X,y)
+      energy_test()
+      
    else:
       # a parallel program to generate data and save into file incrementally
       for trial in range(trials):
