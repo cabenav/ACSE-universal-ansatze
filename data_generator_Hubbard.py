@@ -228,13 +228,13 @@ def run(u_input):
 
    #QUANTUM ALGORITHM: here starts the quantum calculation
 
-   eigennum = np.zeros((trotter,Range+1))
+   #eigennum = np.zeros((trotter,Range+1))
    eigennumH = np.zeros((trotter,Range+1))
    decoherences_approx = np.zeros((trotter,Range+1))
 
-   seed=np.zeros((trotter,Range+1,3*L))
+   #seed=np.zeros((trotter,Range+1,3*L))
    seedH=np.zeros((trotter,Range+1,2*L))
-   frobenius = np.zeros((trotter,Range+1))
+   #frobenius = np.zeros((trotter,Range+1))
    frobeniusH = np.zeros((trotter,Range+1))
 
    state = np.zeros((Range+1,dimH),dtype=complex)
