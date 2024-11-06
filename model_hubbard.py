@@ -228,6 +228,11 @@ def model_train(model, X_train, y_train, X_val, y_val,best_acc_energy=-np.inf,be
     for epoch in range(n_epochs):
         model.train()
         loss_train_list=[]
+        if True: # whether to shuffle the data
+            # permutate input data order randomly
+            indices = torch.randperm(X_train.size()[0])
+            X_train=X_train[indices]
+            y_train=y_train[indices]
         with tqdm.tqdm(batch_start, unit="batch", mininterval=0, disable=False) as bar:
             bar.set_description(f"Epoch {epoch}/{n_epochs}")            
             for start in bar:
@@ -285,7 +290,7 @@ def model_train(model, X_train, y_train, X_val, y_val,best_acc_energy=-np.inf,be
             #print(f'weights saved into {filename_checkpoint} at epoch={epoch}, acc={acc}')
         loss_list.append([loss_train_mean,loss_ansatz,-acc_energy,-best_acc_energy,-acc_decoherence,-best_acc_decoherence])
 
-        if (1+epoch) % 25 ==0: # save loss for each 100 epoches
+        if (1+epoch) % 10 ==0: # save loss for each 100 epoches
             _loss2 = torch.tensor(loss_list).cpu()
             np.save(filename_loss,_loss2)
             print(f'epoch = {epoch}, loss saved into {filename_loss}')
