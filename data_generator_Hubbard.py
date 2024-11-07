@@ -180,69 +180,6 @@ def run(u_input):
       eigen[u].sort()
    eigen=np.array(eigen)
 
-   if False:
-      eigen = [] 
-      data_in_list=[]
-      #for u in range(0,Range+1):
-      min,max = 0,10
-      for u in range(0,100000+1):
-         _u = u/10000
-         #h = Ham(Ham1,Ham2,_u/2)
-         item_in = [1,1,1,1,1,_u/2,_u/2,_u/2,_u/2,_u/2]
-         data_in_list.append(item_in)
-
-         #print(_u/2,h)
-         #input('...')
-
-         v1, v2 = LA.eig(Ham(Ham1,Ham2,_u/2))
-         r = v1.real
-         r.sort()
-         eigen.append(r)
-         #eigen.append(v1)
-         #eigen[u].real
-         #eigen[u].sort()
-      eigen=np.array(eigen)
-
-      #print(eigen)
-      print(eigen[:,0])
-      data_out = eigen[:,0]
-      data_out = data_out[...,np.newaxis]
-      print(data_out)
-      data_in = np.array(data_in_list)
-      print(data_in)
-      data=np.concatenate((data_in,data_out),1)
-      print(data)
-      np.save(filename:='eigen100000.npy',data)
-      plt.xlabel('u/2')
-      plt.ylabel('exact energy')
-      plt.title('energy vs u \n Hamiltonian input: (1,1,1,1,1,u/2,u/2,u/2,u/2,u/2)')
-      #plt.plot(range(0,10000+1)/10,data)
-      x = np.linspace(start:=0,stop:=1.0001/2,num=10001)
-      plt.plot(x,data_out)
-      plt.show()
-      #plt.plot(FI1b, (eigennumH[nn]-eigen[:,0])/eigen[:,0]*100, label=f"HCQE {nn}")
-
-
-      #print(Ham1)
-      #print(Ham2)
-      input('...')
-
-   #for i in range(dimH):
-   #   plt.plot(FI1,np.transpose(eigen)[i],'r-', mfc='none',lw=1)
-   #plt.rc('axes', labelsize=15)
-   #plt.rc('font', size=15)  
-   #plt.show()
-
-   #xnew = np.linspace(0, 10, 300) 
-   #for i in range(dimH):
-   #   spl = make_interp_spline(FI1, np.transpose(eigen)[i], k=3)
-   #   powersmooth = spl(xnew)
-   #   plt.plot(xnew,powersmooth,'k-', mfc='none')
-   #plt.rc('axes', labelsize=15)
-   #plt.rc('font', size=15)  
-   #plt.show()
-
-
    #QUANTUM ALGORITHM: here starts the quantum calculation
 
    #eigennum = np.zeros((trotter,Range+1))
@@ -287,12 +224,7 @@ def run(u_input):
             print(state[u])
             #print('u=',u,'state',state[u])
             print(Hamil)
-         #res = minimize(function(Hamil,state[u]).evalua,seed[nn,u],method='L-BFGS-B')
-         #seed[nn,u] = res.x
-         #frobenius[nn,u] = seed[nn,u] @ seed[nn,u]
-         #state[u] = Unit2(seed[nn,u]) @ state[u]
-         #state[u] = state[u]/np.sqrt((np.conj(state[u]) @ state[u]).real)
-         #eigennum[nn,u] = np.matmul(np.matmul(np.conj(state[u]),Hamil),state[u])
+
       plt.rc('axes', labelsize=15)
       plt.rc('font', size=15)
       plt.plot(FI1b, (eigennumH[nn]-eigen[:,0])/eigen[:,0]*100, label=f"HCQE {nn}")
@@ -305,9 +237,6 @@ def run(u_input):
    plt.xlabel("$U/t$")
    plt.show()
 
-
-   #for u in range(Range+1):
-   #u=0
    for i in range(L):
       instate[L+i] = u_input/2
    if False:
@@ -337,8 +266,6 @@ def run(u_input):
    #print(data1)
    data=np.concatenate(data1,axis=0)
    #print(data)
-   
-   
 
    return data
 
@@ -358,19 +285,6 @@ def run(u_input):
    plt.legend(prop={"size":15},loc='upper left')
    plt.xlabel("$U/t$")
    plt.show()
-
-   #plt.rc('axes', labelsize=15)
-   #plt.rc('font', size=15)  
-   #for nn in range(trotter):
-   #   plt.plot(FI1, frobenius[nn], label='CQE')
-   #plt.legend(prop={"size":15},loc='upper left')
-   #plt.xlabel("$U/t$")
-   #plt.show()
-   #pickle.dump(eigen, open( "list3.p", "wb" ) )
-   #pickle.dump(eigennum, open( "list4.p", "wb" ) )
-
-
-   #print inout, outpout and gs energy
 
 
 
