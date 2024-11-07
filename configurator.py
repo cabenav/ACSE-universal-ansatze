@@ -47,6 +47,11 @@ for arg in sys.argv[1:]:
         else:
             raise ValueError(f"Unknown config key: {key}")
 
+'''
+    Following credited to Weilei Zeng, Nov. 2024
+'''
+
+
 def print_config(globals_output:dict,additional_keys:list = None):
     '''
     print varibles in the current runtime
@@ -65,7 +70,6 @@ def print_config(globals_output:dict,additional_keys:list = None):
     return config_keys, config
 
 import json
-#print(json.dumps(config, indent=2))
 import os
 
 # save config into file, or verify config if file already exist
@@ -84,18 +88,18 @@ def save_config(config:dict, filename_config_json, override=False,verify=True,im
                 #for k in config_keys:    # report changed config
                 for k,_ in cfg.items():
                     if config[k] != cfg[k]:
-                        print(f'Changed config: [{k}]\t  {cfg[k]} \t-> {config[k]}')        
+                        print(f'* Changed config: [{k}]\t  {cfg[k]} \t--> {config[k]}')        
 
     #if not evaluation_only:
     with open(filename_config_json, 'w') as f:
         json.dump(config, f,indent=2)
-    print(f'config saved/overrided into {filename_config_json}')
+    print(f'Config saved/overrided into {filename_config_json}')
 
 
-import signal
 # print config before exit
 def handler(signum, frame):
     '''
+        print config upon Ctrl+C:
         import signal
         from configurator import handler
         signal.signal(signal.SIGINT, handler) # print config before exit
@@ -107,7 +111,5 @@ def handler(signum, frame):
         top_frame = top_frame.f_back    
     print_config(top_frame.f_globals)
     #print('finish printing config')
-    #signal.default_int_handler(signum,frame) # exit and print trace
+    #signal.default_int_handler(signum,frame) # recover default behavior: exit and print trace
     exit(1)
-
-#signal.signal(signal.SIGINT, handler)
