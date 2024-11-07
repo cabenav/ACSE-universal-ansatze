@@ -25,7 +25,7 @@ import pickle
 #Num = int(input("Number of particles: "))
 #trotter = int(input("Trotter (integer) steps: "))
 
-L = 8 #5,8
+L = 12 #5,8
 Num = 2
 trotter = 5
 #u_input=0.3 # input value
@@ -34,14 +34,23 @@ trotter = 5
 TEST=False
 trials=500
 
-block_size=64*16 #512*8
+#block_size=64*2 #512*8
 filename_prefix = '/data/zwl/hubbard/L8n2-h10-wd'
 #filename_prefix = '/data/zwl/hubbard/L5n2-h10'
+filename_prefix = '/data/zwl/hubbard/L12n2-wd'
+#filename_prefix = '/data/zwl/hubbard/test'
 
-threads_config={'L=5':8,'L=8':2}
-num_threads = threads_config[f'L={L}']
+threads_config={'L=5':8,'L=8':2,'L=12':1}
+block_size_config={'L=5':512,'L=8':128,'L=12':8}
+try:
+   num_threads = threads_config[f'L={L}']
+   block_size=block_size_config[f'L={L}']
+except:
+   num_threads = 1
+   block_size=128
 #num_threads = 2 #8  #currently 1 thread takes 1000% cpu for L=5. Total available cores are 128. hence 8 threads works fine
 # 8 for L=5, 2 for L=8
+
 
 #FUNCTIONS
 def Ham(H1,H2,U):
@@ -399,10 +408,12 @@ def Xy2acc(_X,_y,decoherences_data=-1):
    u_input= _X[-1]*2
    Hamil=Ham(Ham1,Ham2,u_input/2)
    #print(u_input)
+
    if _y.shape[0]==11:
       state = _y[1:]  # remove the first one for energy
    else:
       state = _y
+ 
    #print('check 2')
    #print(state)
    #print(Hamil)
