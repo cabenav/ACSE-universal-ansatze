@@ -1,5 +1,5 @@
 print('''     
-machine learning ansatz for hubbard model     
+    machine learning ansatz for Fermi-hubbard model     
 ''')
 
 import copy
@@ -29,12 +29,13 @@ if L==5:
 elif L==8:
     #filename=f'{folder}/L8n2-h10-0.npy'  # L=8
     filename=f'{folder}/L8n2-h10-wd-0.npy'  # L=8, added decoherence data
-    tag='-2000-v1.2'
-    tag='-20000-v1.2'
+    tag='-2000-v1.5'
+    #tag='-20000-v1.4'
 
-truncate_data_size=20000 #default -1
+truncate_data_size=2000 #default -1
 eval_size_min = 10
-eval_size_max = 100
+eval_size_max = 10000  
+# too small evaluation data sets would give unstable estimation results
 
 _=filename.split('/')[-1]  # folder/name.npy -> name
 _=_+tag
@@ -50,15 +51,15 @@ if L==5:
 elif L==8:
     input_width = L*2
     output_width = 28
-hidden_size= 64
-num_hidden_layers=3
+hidden_size= 64*2
+num_hidden_layers=4
 LAYERS= [hidden_size for _ in range(num_hidden_layers+2)]  # 64 x 3
 LAYERS[0]=input_width
 LAYERS[-1]=output_width
 
 learning_rate  = 0.00001  #0.0001
 n_epochs = 11200 #250   # number of epochs to run
-batch_size = 8*1 #10  # size of each batch
+batch_size = 8 #10  # size of each batch
 
 
 #torch.set_printoptions(8)
@@ -133,7 +134,7 @@ np.set_printoptions(linewidth=140)
 if L==5:
     compute_acc = Xy2acc
 
-def get_acc(energy_data,X,y):
+def get_acc(energy_data,X,y): # estimate energy only
     n = energy_data.shape[0]
     energy_computed = torch.zeros_like(energy_data)
     X = X.cpu().detach().numpy()
