@@ -31,6 +31,37 @@ CONF=config/v0.8.7-mse-relative.py  #20 data
 config:
 	$(py) model_parameter.py ${CONF}
 
+	
+#make f=<> plot
+plot:
+	$(py) plot.py ${f}
+plot-all:
+	$(py) all-plots.py
+nvtop:
+	nvidia-smi |head -n 15
+
+#sync figs to weilei's macbook
+rsync:
+	rsync -rP root@10.200.69.64:/root/weilei/ACSE-universal-ansatze/fig/ fig1
+
+backup_folder=/public/home/weileizeng/backup
+backup:
+	rsync -rP . ${backup_folder}/20250613/ --exclude env --exclude .git --exclude data --exclude outdated
+#	rsync -rP . ../backup/ACSE-universal-ansatze/20250613/ --exclude env --exclude .git --exclude data --exclude outdated
+test:
+	$(py) test.py
+
+
+
+## hubbard model
+data-hubbard:
+	$(py) data_generator_Hubbard.py
+hubbard:
+	$(py) model_hubbard.py
+
+
+## Archived content
+
 # train with new data 16->16 mapping
 my-model_parameter_eval:
 	$(py) model_parameter.py \
@@ -107,30 +138,3 @@ data:
 model:
 	CUDA_VISIBLE_DEVICES=${GPU} $(py) model.py ${argv}
 
-	
-#make f=<> plot
-plot:
-	$(py) plot.py ${f}
-plot-all:
-	$(py) all-plots.py
-nvtop:
-	nvidia-smi |head -n 15
-
-#sync figs to weilei's macbook
-rsync:
-	rsync -rP root@10.200.69.64:/root/weilei/ACSE-universal-ansatze/fig/ fig1
-
-backup_folder=/public/home/weileizeng/backup
-backup:
-	rsync -rP . ${backup_folder}/20250613/ --exclude env --exclude .git --exclude data --exclude outdated
-#	rsync -rP . ../backup/ACSE-universal-ansatze/20250613/ --exclude env --exclude .git --exclude data --exclude outdated
-test:
-	$(py) test.py
-
-
-
-## hubbard model
-data-hubbard:
-	$(py) data_generator_Hubbard.py
-hubbard:
-	$(py) model_hubbard.py
