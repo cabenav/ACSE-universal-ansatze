@@ -55,7 +55,7 @@ test:
 
 ## hubbard model
 data-hubbard:
-	$(py) data_generator_Hubbard.py
+	OMP_NUM_THREADS=20 $(py) data_generator_Hubbard.py
 hubbard:
 	$(py) model_hubbard.py
 
