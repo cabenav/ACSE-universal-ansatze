@@ -349,11 +349,6 @@ from data_generator_Pool import append
 from multiprocessing import Pool
 import tqdm
 
-
-from configurator import print_config
-print_config(globals())
-
-
 def energy_test():
    '''Do multiple test to compared computed energy with saved data, got an average error lower than 4e-16'''
    for i in range(1,100):
@@ -368,6 +363,8 @@ def energy_test():
    
 
 if __name__=="__main__":
+   from configurator import print_config
+   print_config(globals())
    if TEST: # do a test with out save anything
       data=run(0.331)
       #print(data)
