@@ -1,6 +1,6 @@
-GPU=0
+GPU=0 #default gpu to use. can also be changed in .py file
 
-.PHONY: data train plot plot-all test config
+.PHONY: data train plot plot-all test config hubbard
 #python3.10 -m venv env
 #source env/bin/activate
 py	=env/bin/python
@@ -17,7 +17,17 @@ CONF=config/v0.4.0-mse-relative-v5.py
 CONF=config/v0.4.1-mse-relative.py
 CONF=config/v0.4.2-test-mse-relative.py
 CONF=config/v0.4.3-conv2d-mse-relative.py
+CONF=config/v0.5.7-mse-relative.py
+CONF=config/v0.8.1-mse-relative.py
+CONF=config/v0.8.2-mse-relative.py
+CONF=config/v0.8.3-mse-relative.py  #batchsize 64
+CONF=config/v0.8.4-mse-relative.py  #batchsize 8
+CONF=config/v0.8.5-mse-relative.py  #batchsize 4
+CONF=config/v0.8.6-mse-relative.py  #200k data
+CONF=config/v0.8.7-mse-relative.py  #20 data
 #config/v0.3.2-base.py
+
+# train the spin model with given config
 config:
 	$(py) model_parameter.py ${CONF}
 
@@ -96,6 +106,8 @@ data:
 
 model:
 	CUDA_VISIBLE_DEVICES=${GPU} $(py) model.py ${argv}
+
+	
 #make f=<> plot
 plot:
 	$(py) plot.py ${f}
@@ -114,3 +126,11 @@ backup:
 #	rsync -rP . ../backup/ACSE-universal-ansatze/20250613/ --exclude env --exclude .git --exclude data --exclude outdated
 test:
 	$(py) test.py
+
+
+
+## hubbard model
+data-hubbard:
+	$(py) data_generator_Hubbard.py
+hubbard:
+	$(py) model_hubbard.py
