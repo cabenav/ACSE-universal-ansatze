@@ -1,7 +1,9 @@
-print('''Train the nerual network
+frontmatter='''Train the nerual network
       Input: 16 random numbers f to generate the Hamiltonian
       Output: 16 ansatz parameters A
-''')
+'''
+print(frontmatter)
+
 import copy
 import numpy as np
 import torch.nn as nn
@@ -19,7 +21,7 @@ from data_generator_Parameter import get_err_F_array
 hidden_size= 64 * 1 * 1
 num_hidden_layers=8 # 5
 n_epochs = 10000   # number of epochs to run
-batch_size = 16 * 2 * 1  #10  # size of each batch
+batch_size = 2 * 2 * 1  #10  # size of each batch
 learning_rate=0.0001  #default 0.001
 eps=1e-2   # small eplison in the denominator when calculating relative loss
 #torch.set_printoptions(8)

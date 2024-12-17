@@ -1,11 +1,12 @@
+frontmatter = '''This program run generate() in parallel, and save into data folder incrementally'''
+print(frontmatter)
+
 import torch
 import numpy as np
 import tqdm
 
 # the function to generate one data entry
 from data_generator_Parameter import generate, get_err_F_array
-
-print('This program run generate() in parallel, and save into data folder incrementally')
 
 ############################# config start #################################
 trials = 10000

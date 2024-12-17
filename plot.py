@@ -81,7 +81,7 @@ elif data.shape[1] == 5:
         x=data.shape[0]
         y=data[-1,i]
         #print( filename_fig,'xy',x,y)
-        plt.annotate(f'({y:.2f})', (x, y), ha='center',va='top')
+        plt.annotate(f'({y:.4f})', (x, y), ha='center',va='top')
     #plt.plot(data[:,:4], label=['validation loss','training loss','acc','best acc'])
 else:
     plt.plot(data, label='validation loss')

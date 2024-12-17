@@ -1,6 +1,9 @@
-'''
+frontmatter='''
    python data_generator_Hubbard.py
+   Weilei Zeng, 2024/12/17
 '''
+print(frontmatter)
+
 import numpy as np
 from numpy import linalg as LA
 from numpy import count_nonzero
@@ -18,7 +21,6 @@ from scipy.sparse import csr_matrix
 import numdifftools as nd
 import scipy.optimize as optimize
 import pickle
- 
     
 #NUMBER OF SITES, WEIGHTS and TROTTER STEPS:
 #L = int(input("L number (integer) of sites: "))
@@ -32,7 +34,7 @@ trotter = 5
 #print(f"L={L},Num={Num},trotter={trotter},u_input={u_input}")
 
 TEST=False
-trials=500
+trials=5000
 
 #block_size=64*2 #512*8
 filename_prefix = '/data/zwl/hubbard/L8n2-h10-wd'

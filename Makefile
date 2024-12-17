@@ -25,6 +25,9 @@ CONF=config/v0.8.4-mse-relative.py  #batchsize 8
 CONF=config/v0.8.5-mse-relative.py  #batchsize 4
 CONF=config/v0.8.6-mse-relative.py  #200k data
 CONF=config/v0.8.7-mse-relative.py  #20 data
+CONF=config/v0.9.1-mse-relative.py  #duplicate 0.5.1 wait for result
+CONF=config/v0.9.2-mse-relative.py  #duplicate 0.5.1
+CONF=config/v0.9.3-mse-relative.py  #duplicate 0.5.1 larger batchsize
 #config/v0.3.2-base.py
 
 # train the spin model with given config

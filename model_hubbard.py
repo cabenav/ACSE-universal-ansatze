@@ -1,6 +1,9 @@
-print('''     
-    machine learning ansatz for Fermi-hubbard model     
-''')
+frontmatter="""
+    model_hubburd.py
+    Weilei Zeng, 2024/12/17
+    machine learning ansatz for Fermi-hubbard model 
+"""
+print(frontmatter)
 
 import copy
 import numpy as np
@@ -44,7 +47,7 @@ filename_loss=f'results/{_}.loss.32'
 print('input/output files:',filename,filename_checkpoint,filename_loss)
 filename_config_json=f'results/{_}.json'
 
-# Nerual network hyper paramters
+# Neural network hyper parameters
 if L==5:
     input_width=10
     output_width=10
@@ -80,6 +83,8 @@ device = (
 if device == "cuda":
     torch.cuda.set_device(gpu)
 print(f"Using {device} device with gpu={gpu}")
+
+##########################     load data    ####################################
 
 print('loading data...') 
 #d = np.load('eigen.npy')
@@ -127,6 +132,8 @@ from configurator import print_config, save_config
 config_keys, config = print_config(globals())
 save_config(config, filename_config_json)
 
+
+########################## module and loss #####################################
 
 from data_generator_Hubbard import Xy2energy, Xy2acc
 mse = nn.MSELoss()
@@ -319,6 +326,8 @@ def model_train(model, X_train, y_train, X_val, y_val,best_acc_energy=-np.inf,be
 
     return best_acc_energy,best_weights
 
+
+############################## main program ####################################
 
 cv_scores = []
 #model = Deep().to(device)
