@@ -1,13 +1,13 @@
 GPU=0 #default gpu to use. can also be changed in .py file
 
-.PHONY: data train plot plot-all test config hubbard
+.PHONY: data train plot plot-all test config hubbard eval-span
 #python3.10 -m venv env
 #source env/bin/activate
 py	=env/bin/python
 
 all:config
 
-eval:my-model_parameter_eval
+#eval:my-model_parameter_eval
 
 CONF=config/v0.4.0-mse-relative-v2.py
 CONF=config/v0.4.0-mse-relative.py
@@ -34,6 +34,10 @@ CONF=config/v0.9.3-mse-relative.py  #duplicate 0.5.1 larger batchsize
 config:
 	$(py) model_parameter.py ${CONF}
 
+CONF=config/v0.5.1-mse-relative-eval.py  # the saved model has conv2d in its structure, which doesn't exist in current code, hence unable to load
+CONF=config/v0.5.7-mse-relative-eval.py
+eval-span:
+	$(py)  model_parameter_eval.py ${CONF}
 	
 #make f=<> plot
 plot:

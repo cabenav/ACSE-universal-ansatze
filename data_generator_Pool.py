@@ -11,9 +11,10 @@ from data_generator_Parameter import generate, get_err_F_array
 ############################# config start #################################
 trials = 10000
 # scipy use defult omp threads=4 for each process. hence the actual cpu being used is num_threads * 4. total core 86
-num_threads=12  # 86 - 12*4 = 38 # 86-24=62 /4 = 15
+#num_threads=12  # 86 - 12*4 = 38 # 86-24=62 /4 = 15
+num_threads = 24  # 128 - 24*4 = 32 on new workstation with 128 core
 # block to save data
-block_size = num_threads * 200 * 5
+block_size = num_threads * 200 * 5 //10
 #folder = 'data'
 #folder = '/public/home/weileizeng/ansatz-data/parameter'
 #folder = '/public/home/weileizeng/ansatz-data/p2'
@@ -22,7 +23,8 @@ folder = '/data/zwl/ansatz-data/p2'  # change for new workstation
 #filename_prefix=f'{folder}/m6'
 #filename_prefix=f'{folder}/p1'
 #filename_prefix=f'{folder}/p2'  #p2 for range (-0.2,0.2)
-filename_prefix=f'{folder}/f5'  #f5 for range (-0.5,0.5)
+#filename_prefix=f'{folder}/f5'  #f5 for range (-0.5,0.5)
+filename_prefix=f'{folder}/eval38'  # eval data for range (-3.8,-1.2)
 #filename='tmp.npy'
 # discontribute data into list of files with limited filesize or avoid slow I/O
 filesize_limit = 300 #50 # in Mb
