@@ -616,34 +616,48 @@ if os.path.exists(filename_checkpoint):
                             # continue with another index
 
                         #print('loss list:',np.array(_loss_list))
+                        import matplotlib.pyplot as plt
                         if recursive:
                             _loss_array = np.array(_loss_array)
                             print('_loss_array')
                             print(_loss_array)
-                            import matplotlib.pyplot as plt
-                            plt.imshow(_loss_array)
+                            
+                            plt.imshow(_loss_array,vmin = 0.004,vmax = 0.012)
                             plt.title(f'validation loss for two parameters in small divisions, ({index1},{index2})')
                             #plt.axis([-3.8,-1.2,-3.8,-1.2])
                             plt.colorbar()
                             values=list(range(0,26,5))
                             labels=[-3.7 + v/10 for v in values]
-                            labels=[f"{v:.2f}" for v in labels ]
+                            labels=[f"{v:.1f}" for v in labels ]
                             values = [v+0.5 for v in values]
                             plt.xticks(values,labels)
                             plt.yticks(values,labels)
                             plt.xlabel(f'parameter $f_{index1}$')
                             plt.ylabel("parameter $f_{"+f"{index2}"+"}$")
                             plt.savefig(f'hot-loss-{index1}-{index2}.pdf')
+                            torch.save([_loss_array,values,labels,index1,index2],f'hot-loss-{index1}-{index2}.pt')   
+                            
+
+                        if False and not recursive:
+                            # plot loss list
+                            plt.title('loss')
+                            plt.xlabel(f'parameter $f_{index}$')
+                            plt.ylabel('loss')
+                            xtick = division_values.copy()
+                            xtick.append(-1.2)
+                            plt.plot(xtick,_loss_list)
+                            plt.savefig(f'curve-loss-{index}.pdf')
                         return _loss_list
-                    index1 = 7
-                    index2 = 14
+                    #0,7,15,show different trends
+                    #index1 = 7  #0-15
+                    #index2 = 14
+                    #index1, index2 = 7,14
+                    index1, index2 = 3,10
                     #index = index1
                     divide_and_eval(X_test,y_test,index = index1)
+                    #divide_and_eval(X_test,y_test,index = index1,recursive=False)
                     print('X_test.shape',X_test.shape)
-                
-
-
-
+            
                     print('finish test')
 
                 print('exit after finishing evaluation')
