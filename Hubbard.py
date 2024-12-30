@@ -216,16 +216,22 @@ for nn in range(trotter):
    plt.rc('axes', labelsize=15)
    plt.rc('font', size=15)
    print("mean",nn+1,"",statistics.mean((-(eigennumH[nn]-eigen[:,0])/eigen[:,0]*100).real))
-   #plt.plot(FI1, -(eigennumH[nn]-eigen[:,0])/eigen[:,0]*100, 'o', label=f"HCQE {nn+1}")
-   plt.plot(FI1,-(decoherences_approx[nn]-decoherences_exact)/L)
+   #plt.plot(FI1, -(eigennumH[nn]-eigen[:,0])/eigen[:,0]*100, '*', label=f"HCQE {nn+1}")
+   #plt.plot(FI1,-(decoherences_approx[nn]-decoherences_exact)/L)
    #plt.plot(FI1, (eigennum[nn]-eigen[:,0])/eigen[:,0]*100, label='ACQE')
-   #plt.plot(FI1, eigennumH[nn], 'o', label=f"HCQE {nn+1}")
+   #plt.plot(FI1, eigennumH[nn], 'x', label=f"HCQE {nn+1}")
    #plt.plot(FI1, eigennum[nn], label='CQE')
+#plt.plot(FI1, eigennumH[0], 'ro', label=f"HCQE 1",markerfacecolor='none')
+plt.plot(FI1, -(eigennumH[0]-eigen[:,0])/eigen[:,0]*100, 'ro', label=f"HCQE 1",markerfacecolor='none')
+#plt.plot(FI1, eigennumH[1], 'bx', label=f"HCQE 2")
+plt.plot(FI1, -(eigennumH[1]-eigen[:,0])/eigen[:,0]*100, 'bx', label=f"HCQE 2")
 #plt.plot(FI1, eigen[:,0],'k--', mfc='none',label='exact')
-plt.legend(prop={"size":15},loc='upper left')
-plt.title("% error in decoherences")
-plt.xlabel("$U/t$")
+#plt.legend(prop={"size":15},loc='lower right')
+plt.title("% error")
+#plt.xlabel("U/t")
+plt.savefig("error.pdf", format="pdf")
 plt.show()
+
 
 
 for u in range(Range+1):
@@ -250,6 +256,7 @@ for nn in range(1,trotter):
    plt.plot(FI1, frobeniusH[nn], label=f"HCQE {nn}")
 plt.legend(prop={"size":15},loc='upper left')
 plt.xlabel("$U/t$")
+plt.savefig("error.pdf",format="pdf")
 plt.show()
 
 #plt.rc('axes', labelsize=15)
