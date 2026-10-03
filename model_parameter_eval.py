@@ -653,6 +653,7 @@ if os.path.exists(filename_checkpoint):
                     #index2 = 14
                     #index1, index2 = 7,14
                     index1, index2 = 3,10
+                    index1, index2 = 0,2
                     #index = index1
                     divide_and_eval(X_test,y_test,index = index1)
                     #divide_and_eval(X_test,y_test,index = index1,recursive=False)
