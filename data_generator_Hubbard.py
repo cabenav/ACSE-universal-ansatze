@@ -27,7 +27,7 @@ import pickle
 #Num = int(input("Number of particles: "))
 #trotter = int(input("Trotter (integer) steps: "))
 
-L = 12 #5,8
+L = 9 #5,8,12,9
 Num = 2
 trotter = 5
 #u_input=0.3 # input value
@@ -41,9 +41,12 @@ filename_prefix = '/data/zwl/hubbard/L8n2-h10-wd'
 #filename_prefix = '/data/zwl/hubbard/L5n2-h10'
 filename_prefix = '/data/zwl/hubbard/L12n2-wd'
 #filename_prefix = '/data/zwl/hubbard/test'
+filename_prefix = '/data/zwl/hubbard/L9n4-v1'
 
-threads_config={'L=5':8,'L=8':2,'L=12':1}
-block_size_config={'L=5':512,'L=8':128,'L=12':8}
+threads_config={'L=5':8,'L=8':2,'L=12':1, 'L=9':8}
+block_size_config={'L=5':512,'L=8':128,'L=12':8, 'L=9':64}
+if L==9:
+   Num = 4
 try:
    num_threads = threads_config[f'L={L}']
    block_size=block_size_config[f'L={L}']
