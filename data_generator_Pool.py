@@ -24,7 +24,8 @@ folder = '/data/zwl/ansatz-data/p2'  # change for new workstation
 #filename_prefix=f'{folder}/p1'
 #filename_prefix=f'{folder}/p2'  #p2 for range (-0.2,0.2)
 #filename_prefix=f'{folder}/f5'  #f5 for range (-0.5,0.5)
-filename_prefix=f'{folder}/eval38'  # eval data for range (-3.8,-1.2)
+#filename_prefix=f'{folder}/eval38'  # eval data for range (-3.8,-1.2)
+filename_prefix=f'{folder}/eval38-region01'  # eval data in small ranges for range (-3.8,-1.2)
 #filename='tmp.npy'
 # discontribute data into list of files with limited filesize or avoid slow I/O
 filesize_limit = 300 #50 # in Mb

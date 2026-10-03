@@ -93,7 +93,10 @@ if M==2:
       #f = np.random.uniform(-10, 10, (4, 4))   #This is the input: a 4x4 matrix
       #f = np.random.uniform(-0.2, 0.2, (4, 4)) # check if this is a safe region
       #f = np.random.uniform(-0.5, 0.5, (4, 4)) # check if this is a safe region
-      f = np.random.uniform(-3.8, -1.2, (4, 4))
+      #f = np.random.uniform(-3.8, -1.2, (4, 4))
+      f = np.random.uniform(0, 0.1, (4, 4))
+      shift = np.floor(np.random.random()*26)*0.1-3.8 # [-3.8,-1.3)
+      f = f + shift  # all parameters sample in same small region of width 0.1
       return f
 
    def get_AllPauli(PauliMatrix):
