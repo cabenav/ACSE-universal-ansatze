@@ -1,0 +1,22 @@
+{
+  "gpu": 5,
+  "folder": "/data/zwl/hubbard",
+  "L": 8,
+  "filename": "/data/zwl/hubbard/L8n2-h10-wd-0.npy",
+  "tag": "-2000-v1.2",
+  "truncate_data_size": 2000,
+  "eval_size_min": 10,
+  "eval_size_max": 100,
+  "filename_checkpoint": "results/L8n2-h10-wd-0.npy-2000-v1.2.32",
+  "filename_loss": "results/L8n2-h10-wd-0.npy-2000-v1.2.loss.32",
+  "filename_config_json": "results/L8n2-h10-wd-0.npy-2000-v1.2.json",
+  "input_width": 16,
+  "output_width": 28,
+  "hidden_size": 64,
+  "num_hidden_layers": 3,
+  "learning_rate": 1e-05,
+  "n_epochs": 11200,
+  "batch_size": 4,
+  "device": "cuda",
+  "eval_size": 100
+}

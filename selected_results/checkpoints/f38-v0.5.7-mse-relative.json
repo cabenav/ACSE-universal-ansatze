@@ -1,0 +1,41 @@
+{
+  "hidden_size": 256,
+  "num_hidden_layers": 6,
+  "n_epochs": 10000,
+  "batch_size": 64,
+  "learning_rate": 0.0001,
+  "eps": 0.01,
+  "data_folder": "/data/zwl/ansatz-data/p2",
+  "result_folder": "checkpoints",
+  "title": "f38",
+  "tag": "v0.5.7-mse-relative",
+  "gpu": 3,
+  "data_file_limit": 1,
+  "evaluation_only": false,
+  "config_file": "config/v0.5.7-mse-relative.py",
+  "description": "change to two loss term: mse + relative; use gamma = 0.1; small batch size",
+  "comment": "\n    Small batch size helps, 64 behave much better than 256. should try 16\n    change to data in new region\n    remove conv2d\n    modify relative loss\n    remove relative loss\n    add more data\n    data ranged (-3.8,-1.2)\n",
+  "note": "v0.5.7-mse-relative",
+  "filename_prefix": "/data/zwl/ansatz-data/p2/f38",
+  "filename_checkpoint": "checkpoints/f38-v0.5.7-mse-relative-check.pt",
+  "filename_loss": "checkpoints/f38-v0.5.7-mse-relative-loss.pt",
+  "filename_config_json": "checkpoints/f38-v0.5.7-mse-relative.json",
+  "device": "cuda",
+  "python_date": "2024-10-29 09:46:25.816351",
+  "eval_size": 45600,
+  "Ene_abs_mean": 9.984698295593262,
+  "max_eval_length": 10000,
+  "filelist": [
+    "/data/zwl/ansatz-data/p2/f38-0.npy"
+  ],
+  "LAYERS": [
+    16,
+    256,
+    256,
+    256,
+    256,
+    256,
+    256,
+    16
+  ]
+}
