@@ -56,6 +56,11 @@ except:
 #num_threads = 2 #8  #currently 1 thread takes 1000% cpu for L=5. Total available cores are 128. hence 8 threads works fine
 # 8 for L=5, 2 for L=8
 
+if True: # for test
+   print("test mode for printing info")
+   num_threads = 1
+   block_size = 128
+
 
 #FUNCTIONS
 def Ham(H1,H2,U):
@@ -244,13 +249,15 @@ def run(u_input):
 
    for i in range(L):
       instate[L+i] = u_input/2
-   if False:
+   if True:
+      print('test mode for printing info')
       u=0
       print("input Hamiltonian parameters", instate)
       for nn in range(trotter):
          print("output ansatz", nn, ":", seedH[nn,u])
       print("ground-state energy", eigennumH[nn,u])
       print("final state",state[0])
+      #exit()
       #break
    #print('nn=',nn)
    #print(eigennumH[:,0])
@@ -264,9 +271,11 @@ def run(u_input):
       np.array([decoherences_approx[nn,0]]),
       np.array([eigennumH[nn,0]]), #"ground-state energy"  save it again  for easy read with decoherence
    ]
-   #L=8 (16,),(1,),(1,),(28,),(28,),(80,),(1,),(1,)
-   #for i in data1:
-   #   print(i.shape,end=',')
+   #L=8 n=2     (16,),(1,),(1,),(28,),(28,),(80,),(1,),(1,)
+   #L=9 n=Num=4 (18,),(1,),(1,),(126,),(126,),(90,),(1,),(1,)
+   for i in data1:
+      print(i.shape,end=',')
+   exit()
    #input('...')
    #print(data1)
    data=np.concatenate(data1,axis=0)
