@@ -20,7 +20,7 @@ gpu=6  # the indexed gpu to be used
 folder='/data/zwl/hubbard'  #data folder
 
 
-L=8 # to decide data shape and position
+L=9 # to decide data shape and position
 if L==5:
     #filename=f'{folder}/h10-0.npy'  # L=5
     filename=f'{folder}/L5n2-h10-0.npy'  # L=5， added decoherence data
@@ -34,6 +34,10 @@ elif L==8:
     filename=f'{folder}/L8n2-h10-wd-0.npy'  # L=8, added decoherence data
     tag='-2000-v1.5'
     #tag='-20000-v1.4'
+
+elif L==9:
+    filename=f'{folder}/L9n4-v1-0.npy'  # L=9, added decoherence data
+    tag='-2000-v0.1'
 
 truncate_data_size=2000 #default -1
 eval_size_min = 10
@@ -54,6 +58,9 @@ if L==5:
 elif L==8:
     input_width = L*2
     output_width = 28
+elif L==9:
+    input_width = L*2
+    output_width = 126
 hidden_size= 64*2
 num_hidden_layers=4
 LAYERS= [hidden_size for _ in range(num_hidden_layers+2)]  # 64 x 3
@@ -118,6 +125,10 @@ elif L==8:
     X = data[:,:L*2]
     _index = 2*L +1+1
     y = data[:,_index:(_index+28)]
+elif L==9:
+    X = data[:,:L*2]
+    _index = 2*L +1+1
+    y = data[:,_index:(_index+126)]
 #energy_from_file = data[:,11]
 energy_from_file = data[:,-1]
 obsevables_from_file = data[:,-2:]
